@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homework 1 · Private key → public key on a toy elliptic curve</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .card  { @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8; }
+      .h2    { @apply text-2xl font-semibold tracking-tight text-slate-900; }
+      .h3    { @apply text-lg font-semibold text-slate-900 mt-8 mb-2; }
+      .lead  { @apply text-slate-600 mt-2 leading-relaxed; }
+      .btn   { @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition; }
+      .btn-2 { @apply inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition; }
+      .field { @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500; }
+      .tbl   { @apply w-full text-sm text-left; }
+      .tbl th { @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50; }
+      .tbl td { @apply px-3 py-2 border-b border-slate-100 align-top; }
+      .tile  { @apply rounded-xl bg-slate-50 border border-slate-200 p-4; }
+      .tile b { @apply block text-xl font-semibold text-slate-900; }
+      .tile span { @apply text-xs text-slate-500; }
+      .note  { @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed; }
+      .mono  { @apply font-mono text-[13px]; }
+    }
+    .font-mono, .mono, .val { font-variant-ligatures: none; }
+    table.mono td, table.mono th { white-space: nowrap; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+  <nav class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm">
+      <a href="index.html" class="font-semibold text-slate-900">Statistics · Homeworks</a>
+      <div class="hidden md:flex gap-5 text-slate-600">
+        <a href="#compute" class="hover:text-indigo-600">Compute</a>
+        <a href="#visual" class="hover:text-indigo-600">Visualisation</a>
+        <a href="#stats" class="hover:text-indigo-600">Statistics</a>
+        <a href="#discussion" class="hover:text-indigo-600">Discussion</a>
+        <a href="#research" class="hover:text-indigo-600">Research</a>
+        <a href="hw2.html" class="text-indigo-600 font-medium">Homework 2 →</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+
+    <header>
+      <p class="text-sm font-medium text-indigo-600">Homework 1 · Public-key cryptography</p>
+      <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">Private key → public key in Ethereum</h1>
+      <p class="lead max-w-3xl">
+        A toy version of what an Ethereum wallet does with secp256k1: multiply a base point <i>G</i> by a secret
+        number <i>k</i> and publish the result <i>Q = kG</i>. Going forward is easy; going back from <i>Q</i> to
+        <i>k</i> is the <b>Elliptic Curve Discrete Logarithm Problem</b> (ECDLP). This page computes it step by step,
+        animates it, and then studies the statistical behaviour of the map <i>k → kG</i>.
+      </p>
+    </header>
+
+    <!-- ============ THE IDEA ============ -->
+    <section class="card">
+      <h2 class="h2">1. The idea in one minute</h2>
+      <div class="grid md:grid-cols-2 gap-6 mt-4">
+        <div class="text-sm leading-relaxed space-y-3">
+          <p>
+            The curve is <b class="mono">y² = x³ + 7 (mod 17)</b>, the same equation as secp256k1 but with a tiny
+            prime instead of a 256-bit one. Its points, plus a special "point at infinity" <b>O</b>, form a
+            <b>group</b>: two points can be added and the result is again a point of the curve.
+          </p>
+          <p>
+            <b>Scalar multiplication</b> is repeated addition: <span class="mono">kG = G + G + … + G</span> (<i>k</i> times).
+            The private key is the number <i>k</i>, the public key is the point <i>Q = kG</i>.
+          </p>
+          <p>
+            Here: base point <b class="mono">G = (1, 5)</b>, private key <b class="mono">k = 6</b>.
+          </p>
+        </div>
+        <div class="tile text-sm">
+          <p class="font-medium text-slate-900 mb-2">Adding two points P + Q = R</p>
+          <p class="mono leading-7">
+            slope λ = (y<sub>Q</sub> − y<sub>P</sub>) / (x<sub>Q</sub> − x<sub>P</sub>) &nbsp;&nbsp;if P ≠ Q<br>
+            slope λ = 3x<sub>P</sub>² / 2y<sub>P</sub> &nbsp;&nbsp;if P = Q (doubling)<br>
+            x<sub>R</sub> = λ² − x<sub>P</sub> − x<sub>Q</sub><br>
+            y<sub>R</sub> = λ(x<sub>P</sub> − x<sub>R</sub>) − y<sub>P</sub>
+          </p>
+          <p class="text-slate-500 mt-2">
+            Everything is modulo 17. "Dividing" means multiplying by the modular inverse.
+            If Q = −P (same x, opposite y) the result is O.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COMPUTE ============ -->
+    <section class="card" id="compute">
+      <h2 class="h2">2. Compute the toy public key</h2>
+      <p class="lead">Choose a private key and compute <span class="mono">G, 2G, 3G, …, kG</span>.</p>
+
+      <div class="flex flex-wrap items-end gap-3 mt-5">
+        <label class="text-sm">Private key k<br>
+          <input id="k" type="number" min="1" max="1000000" value="6" class="field w-32 mt-1">
+        </label>
+        <button id="run" class="btn">Compute Q = kG</button>
+        <span class="text-sm text-slate-500">curve y² = x³ + 7 (mod 17), G = (1, 5)</span>
+      </div>
+
+      <div class="mt-6 rounded-2xl bg-slate-900 text-white p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-indigo-300">Toy public key</p>
+          <p id="pubkey" class="text-3xl font-semibold mono mt-1"></p>
+        </div>
+        <p id="pubnote" class="text-sm text-slate-300 max-w-md"></p>
+      </div>
+
+      <h3 class="h3">Step by step: repeated addition</h3>
+      <div class="overflow-x-auto">
+        <table class="tbl mono" id="steps"></table>
+      </div>
+      <p id="stepsNote" class="text-sm text-slate-500 mt-2"></p>
+
+      <h3 class="h3">The fast method: double-and-add</h3>
+      <p class="text-sm text-slate-600 mb-3">
+        Real keys are 256-bit numbers, so adding G one time after another is impossible. Double-and-add reads the bits
+        of <i>k</i> from the right: at each bit the helper point <i>A</i> is doubled, and it is added to the result
+        <i>R</i> only when the bit is 1. It needs about log₂ k steps instead of k.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="tbl mono" id="trace"></table>
+      </div>
+    </section>
+
+    <!-- ============ VISUAL ============ -->
+    <section class="card" id="visual">
+      <h2 class="h2">3. Slow-motion visualisation</h2>
+      <p class="lead">
+        The grid shows all 17 points of the curve over the integers modulo 17. Each step adds <i>G</i> to the previous
+        multiple and jumps to a new point. It uses the value of <i>k</i> chosen above.
+      </p>
+      <div class="grid md:grid-cols-[460px,1fr] gap-6 mt-5 items-start">
+        <svg id="plot" viewBox="0 0 520 520" class="w-full max-w-[520px] rounded-xl border border-slate-200 bg-white"></svg>
+        <div>
+          <div class="flex flex-wrap gap-2">
+            <button id="play" class="btn">▶ Play</button>
+            <button id="next" class="btn-2">Step</button>
+            <button id="reset" class="btn-2">Reset</button>
+          </div>
+          <div id="vizInfo" class="tile mt-4 text-sm mono leading-7 min-h-[11rem]"></div>
+          <div class="text-xs text-slate-500 mt-3 space-y-1">
+            <p><span class="inline-block w-3 h-3 rounded-full bg-slate-300 align-middle"></span> point of the curve</p>
+            <p><span class="inline-block w-3 h-3 rounded-full bg-indigo-500 align-middle"></span> multiple of G already reached</p>
+            <p><span class="inline-block w-3 h-3 rounded-full bg-amber-500 align-middle"></span> current point</p>
+          </div>
+        </div>
+      </div>
+      <p class="note">
+        <b>What to notice.</b> The jumps look erratic: there is no visible pattern linking <i>k</i> to the position of
+        <i>kG</i>. But after 9 steps the walk reaches O and starts again: <i>G</i> = (1, 5) has <b>order 9</b>, so on
+        this curve only 8 different public keys exist and <i>k</i> and <i>k</i> + 9 give the same one. The curve has 18
+        points in total, but this base point reaches only half of them. On secp256k1 the order is a prime of about
+        2<sup>256</sup>, so every key gives a different point.
+      </p>
+    </section>
+
+    <!-- ============ STATISTICS ============ -->
+    <section class="card" id="stats">
+      <h2 class="h2">4. Statistical exploration</h2>
+      <p class="lead">
+        The experiment is repeated for <b>every</b> private key <i>k</i> = 1 … n − 1 (n = order of the base point), and
+        the resulting points are studied as data. With p = 17 there are at most 17 outputs, too few for any test, so
+        the same curve equation is also used with the prime <b>p = 8191</b> (8011 points, a prime number, as on
+        secp256k1).
+      </p>
+
+      <div class="flex flex-wrap items-end gap-3 mt-5">
+        <label class="text-sm">Curve<br>
+          <select id="curve" class="field mt-1">
+            <option value="8191">y² = x³ + 7 (mod 8191) — large</option>
+            <option value="17">y² = x³ + 7 (mod 17) — toy</option>
+          </select>
+        </label>
+        <label class="text-sm">Base point G<br>
+          <select id="base" class="field mt-1"></select>
+        </label>
+        <button id="runStats" class="btn">Run experiments</button>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6" id="tiles"></div>
+      <p id="smallWarn" class="note hidden"></p>
+
+      <h3 class="h3">4.1 Distribution of the x and y coordinates</h3>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div><p class="text-xs text-slate-500 mb-1">Histogram of x</p><div id="histX"></div></div>
+        <div><p class="text-xs text-slate-500 mb-1">Histogram of y</p><div id="histY"></div></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-3">
+        On the large curve both histograms are flat and the means are close to (p − 1)/2. But the flatness holds only
+        at coarse grain: only about <b>half</b> of the possible x values ever appear (those for which x³ + 7 is a
+        square), and each of them appears exactly twice, with opposite y. The outputs are uniform <b>over the points of
+        the curve</b>, not over all the numbers from 0 to p − 1.
+      </p>
+
+      <h3 class="h3">4.2 Frequency of individual values</h3>
+      <div class="overflow-x-auto"><table class="tbl" id="freq"></table></div>
+      <p class="text-sm text-slate-600 mt-3">
+        Every point is produced <b>exactly once</b>: <i>k → kG</i> is a one-to-one map (a permutation of the group), so
+        there are no collisions and no missing outputs. A random function behaves differently: throwing N balls into N
+        boxes leaves about 1/e ≈ 37% of the boxes empty. This single number already separates <i>kG</i> from a hash.
+      </p>
+
+      <h3 class="h3">4.3 Distribution of bits</h3>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div><p class="text-xs text-slate-500 mb-1">Fraction of ones per bit of x (left = least significant)</p><div id="bitX"></div></div>
+        <div><p class="text-xs text-slate-500 mb-1">Fraction of ones per bit of y</p><div id="bitY"></div></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-3" id="bitText"></p>
+
+      <h3 class="h3">4.4 Apparent uniformity (χ² test)</h3>
+      <div class="overflow-x-auto"><table class="tbl" id="chi"></table></div>
+      <p class="text-sm text-slate-600 mt-3">
+        The test uses a <b>random sample of 1000 keys</b> and 10 equal bins; with 9 degrees of freedom uniformity is
+        rejected at the 5% level when χ² &gt; 16.92. The numbers change at every run because the sample is random. "Not
+        rejected" does not mean "proved uniform": from 4.1 we know that half of the x values never occur, the 10-bin
+        test is simply too coarse to see it.
+      </p>
+
+      <h3 class="h3">4.5 Correlation between input and output</h3>
+      <div class="grid md:grid-cols-[1fr,auto] gap-6 items-start">
+        <div class="overflow-x-auto"><table class="tbl" id="corr"></table></div>
+        <div>
+          <canvas id="scatter" width="420" height="240" class="rounded-xl border border-slate-200 bg-white max-w-full"></canvas>
+          <p class="text-xs text-slate-500 mt-1">k (horizontal) against x(kG) (vertical); dashed line at k = n/2</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 mt-3">
+        Pearson's r is practically zero: knowing <i>k</i> does not help to predict the coordinates with a straight
+        line. But the scatter plot is a perfect mirror image around k = n/2, because (n − k)G = −(kG) has the same x.
+        And (k + 1)G = kG + G, so each output is computed from the previous one with a public formula.
+        <b>Zero correlation is not independence</b>: the relation is exact, it is just not linear.
+      </p>
+
+      <h3 class="h3">4.6 Avalanche-like behaviour</h3>
+      <div class="grid md:grid-cols-[1fr,1fr] gap-6 items-start">
+        <div class="overflow-x-auto"><table class="tbl" id="aval"></table></div>
+        <div><p class="text-xs text-slate-500 mb-1">Mean fraction of output bits changed, per flipped bit of k</p><div id="avalBars"></div></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-3">
+        One bit of <i>k</i> is flipped and the bits of the new point (x followed by y) are compared with the old ones.
+        On the large curve about <b>half</b> of the output bits change, as for a hash. But the two outputs are not
+        unrelated: flipping bit <i>i</i> gives k′G = kG ± 2<sup>i</sup>G, the old point plus or minus a fixed, public
+        point. Anyone can compute one from the other without knowing <i>k</i>. For a hash function such a relation
+        would be a break.
+      </p>
+
+      <h3 class="h3">4.7 Different base points</h3>
+      <p class="text-sm text-slate-600">
+        On the toy curve the base point decides everything, because the group order 18 is not prime:
+      </p>
+      <div class="overflow-x-auto mt-2"><table class="tbl mono" id="orders"></table></div>
+      <p class="text-sm text-slate-600 mt-3">
+        On the large curve the order 8011 is prime, so every point generates the whole group: changing the base point
+        only changes the <i>order</i> in which the same points are visited, and the histograms and bit frequencies stay
+        identical (try it with the selector above). This is why real curves are chosen with a prime order.
+      </p>
+    </section>
+
+    <!-- ============ DISCUSSION ============ -->
+    <section class="card" id="discussion">
+      <h2 class="h2">5. Discussion: one-way function or hash function?</h2>
+      <p class="lead">
+        <i>k → kG</i> and a hash such as Keccak-256 are both deterministic, easy to compute and hard to invert. The
+        similarity ends there. A <b>one-way function</b> is only required to be hard to invert. A
+        <b>cryptographic hash</b> must also accept inputs of any length, make collisions impossible to find and show
+        no relation at all between the outputs of related inputs.
+      </p>
+
+      <div class="overflow-x-auto mt-5">
+        <table class="tbl">
+          <tr><th>Property measured</th><th>Observed for kG (large curve)</th><th>Meaningful for a one-way function?</th><th>Specific to hash functions?</th></tr>
+          <tr><td>Distribution of x, y</td><td>flat at coarse grain; half of the x values never occur</td><td>Yes, in the form "uniform over the group": no public key is more likely than another</td><td>A hash must be uniform over <i>all</i> bit strings</td></tr>
+          <tr><td>Frequency of values</td><td>every point exactly once</td><td>Yes: each private key has its own public key</td><td>Different: a hash has repeated and missing outputs (≈ 37%)</td></tr>
+          <tr><td>Bit balance</td><td>≈ 0.5 per bit</td><td>Not required</td><td><b>Required</b></td></tr>
+          <tr><td>Uniformity (χ²)</td><td>not rejected</td><td>Not required</td><td><b>Required</b></td></tr>
+          <tr><td>Correlation k ↔ output</td><td>r ≈ 0, but exact mirror symmetry</td><td>Only "no relation that reveals k efficiently"</td><td><b>Required</b> in the strong form: no relation at all</td></tr>
+          <tr><td>Avalanche</td><td>≈ 0.5 of the bits, but k′G = kG ± 2<sup>i</sup>G</td><td>Not required</td><td><b>Required</b> (strict avalanche criterion)</td></tr>
+        </table>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-6 text-sm leading-relaxed">
+        <div class="tile">
+          <p class="font-semibold text-slate-900 mb-2">Meaningful for a one-way function (kG)</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><b>Hardness of inversion</b> (ECDLP): the defining property. It is computational, not statistical: none of the six experiments can measure it.</li>
+            <li><b>Uniformity over the group</b>: a uniform key gives a uniform public key.</li>
+            <li><b>Injectivity</b>: no two keys share a public key.</li>
+            <li><b>Large prime order</b>: no small subgroups (the toy curve shows what happens otherwise).</li>
+          </ul>
+        </div>
+        <div class="tile">
+          <p class="font-semibold text-slate-900 mb-2">Specific to cryptographic hash functions</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><b>Compression</b> of inputs of arbitrary length to a fixed size.</li>
+            <li><b>Collision resistance</b>: collisions exist but cannot be found. For kG they do not exist at all.</li>
+            <li><b>Strict avalanche</b>: outputs of related inputs are unrelated.</li>
+            <li><b>Random-oracle behaviour</b>: unbiased, independent output bits, no algebraic structure.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="note">
+        <b>The structure is a feature.</b> The rule (k₁ + k₂)G = k₁G + k₂G makes <i>kG</i> a bad hash, and it is exactly
+        what digital signatures (ECDSA), key agreement (Diffie–Hellman) and wallet key derivation (BIP-32) are built
+        on. This is also why Ethereum never uses a public key directly as an identifier: it passes it through
+        Keccak-256 first (see <a class="underline" href="hw2.html">Homework 2</a>).<br><br>
+        <b>The limit of statistics.</b> On the toy curve the statistics have the same shape as on the large one, yet
+        inverting it takes at most 8 attempts. Statistical tests can <i>refute</i> randomness; they can never
+        <i>prove</i> security. "Looks random" is measured, "is hard to invert" is conjectured.
+      </p>
+    </section>
+
+    <!-- ============ RESEARCH ============ -->
+    <section class="card" id="research">
+      <h2 class="h2">6. Research: cryptography and statistics in the most famous blockchains</h2>
+      <p class="lead">
+        A blockchain is a ledger replicated among computers that do not trust each other. Cryptography guarantees
+        <i>who</i> can write (signatures) and that the past cannot be changed (hashes). Statistics guarantees that the
+        network <i>agrees</i>: security is probabilistic, an attack is not impossible but its probability is made
+        negligible.
+      </p>
+
+      <div class="overflow-x-auto mt-5">
+        <table class="tbl">
+          <tr><th></th><th>Bitcoin (2009)</th><th>Ethereum (2015)</th><th>Solana (2020)</th><th>Cardano (2017)</th></tr>
+          <tr><td class="font-medium">Signature</td><td>ECDSA, Schnorr since 2021</td><td>ECDSA (accounts), BLS (validators)</td><td>EdDSA (Ed25519)</td><td>EdDSA (Ed25519)</td></tr>
+          <tr><td class="font-medium">Curve</td><td>secp256k1</td><td>secp256k1, BLS12-381</td><td>Curve25519</td><td>Curve25519</td></tr>
+          <tr><td class="font-medium">Main hash</td><td>SHA-256 (twice)</td><td>Keccak-256</td><td>SHA-256</td><td>BLAKE2b</td></tr>
+          <tr><td class="font-medium">Consensus</td><td>proof of work</td><td>proof of stake (since 2022)</td><td>proof of stake</td><td>proof of stake</td></tr>
+        </table>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-6 text-sm leading-relaxed">
+        <div class="tile">
+          <p class="font-semibold text-slate-900 mb-2">Bitcoin: mining as a random experiment</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Each hash attempt is a <b>Bernoulli trial</b> with a tiny success probability: the number of attempts is geometric, the time between blocks is approximately <b>exponential</b> (mean 10 minutes) and the blocks per hour are <b>Poisson</b> (mean 6).</li>
+            <li>The <b>difficulty adjustment</b> every 2016 blocks is an estimate of the network's computing power from a sample of waiting times.</li>
+            <li>The <b>double-spend probability</b> in the Bitcoin whitepaper is a random-walk (gambler's ruin) calculation: with 10% of the power and 6 confirmations it is about 0.02%, which is the origin of the "wait 6 blocks" rule.</li>
+          </ul>
+        </div>
+        <div class="tile">
+          <p class="font-semibold text-slate-900 mb-2">Ethereum: consensus by random sampling</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Every 12 seconds one validator is drawn at random, with probability proportional to its stake, to propose a block.</li>
+            <li>Validators are shuffled into <b>committees</b>: a committee is a random sample of the population, sized so that a dishonest majority has a negligible (binomial-tail) probability.</li>
+            <li><b>BLS signatures</b> can be aggregated thanks to the same kind of algebraic structure studied above.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto mt-6">
+        <table class="tbl">
+          <tr><th>Statistical concept</th><th>Where it appears in blockchains</th></tr>
+          <tr><td>Uniform distribution</td><td>hash outputs, private keys, addresses</td></tr>
+          <tr><td>Bernoulli trials, geometric distribution</td><td>mining attempts, search for "vanity" addresses</td></tr>
+          <tr><td>Poisson and exponential distributions</td><td>number of blocks per hour, waiting time between blocks</td></tr>
+          <tr><td>Random walk</td><td>double-spend probability</td></tr>
+          <tr><td>Estimation from a sample</td><td>Bitcoin difficulty adjustment</td></tr>
+          <tr><td>Random sampling, binomial tails</td><td>validator committees in proof of stake</td></tr>
+          <tr><td>Birthday problem</td><td>collisions between addresses (2<sup>160</sup> values → about 2<sup>80</sup> attempts)</td></tr>
+          <tr><td>Entropy</td><td>generation of keys and mnemonic phrases</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="h2">References</h2>
+      <ul class="list-disc pl-5 mt-3 text-sm space-y-1 text-slate-600">
+        <li>A. Corbellini, <a class="text-indigo-600 underline" href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Elliptic Curve Cryptography: a gentle introduction</a></li>
+        <li>SEC 2: Recommended Elliptic Curve Domain Parameters (secp256k1) — <a class="text-indigo-600 underline" href="https://www.secg.org/sec2-v2.pdf">secg.org</a></li>
+        <li>A. Antonopoulos, G. Wood, <a class="text-indigo-600 underline" href="https://github.com/ethereumbook/ethereumbook">Mastering Ethereum</a>, chapter "Cryptography"</li>
+        <li>NIST SP 800-22, <a class="text-indigo-600 underline" href="https://csrc.nist.gov/pubs/sp/800/22/r1/upd1/final">A Statistical Test Suite for Random and Pseudorandom Number Generators</a></li>
+        <li>S. Nakamoto, <a class="text-indigo-600 underline" href="https://bitcoin.org/bitcoin.pdf">Bitcoin: A Peer-to-Peer Electronic Cash System</a> (section 11)</li>
+        <li><a class="text-indigo-600 underline" href="https://ethereum.org/en/developers/docs/consensus-mechanisms/pos/">ethereum.org — Proof of stake</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-4 pb-10 text-xs text-slate-400">
+    Giorgio Paoloni · Student ID 1943153 · Statistics, MSc in Cybersecurity, Sapienza University of Rome · 2026. Educational toy example, not a real cryptographic system.
+  </footer>
+
+  <script src="js/ui.js"></script>
+  <script src="js/ecc.js"></script>
+  <script src="js/hw1.js"></script>
+</body>
+</html>
