@@ -184,6 +184,12 @@
         the same curve equation is also used with the prime <b>p = 8191</b> (8011 points, a prime number, as on
         secp256k1).
       </p>
+      <p class="text-sm text-slate-500 mt-2">
+        <b>How the points were counted.</b> By direct count: for each <i>x</i> from 0 to p − 1, x³ + 7 gives 2 points if
+        it is a nonzero square mod p, 1 if it is 0, none otherwise; then O is added. This takes p steps, fine for 17 and
+        8191. For 256-bit curves the count uses <b>Schoof's algorithm</b> (polynomial time), and <b>Hasse's theorem</b>
+        guarantees it is close to p + 1: |#E − (p + 1)| ≤ 2√p (for p = 17: between 10 and 26; it is 18).
+      </p>
 
       <div class="flex flex-wrap items-end gap-3 mt-5">
         <label class="text-sm">Curve<br>
@@ -389,10 +395,7 @@
       <h2 class="h2">References</h2>
       <ul class="list-disc pl-5 mt-3 text-sm space-y-1 text-slate-600">
         <li>A. Corbellini, <a class="text-indigo-600 underline" href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Elliptic Curve Cryptography: a gentle introduction</a></li>
-        <li>SEC 2: Recommended Elliptic Curve Domain Parameters (secp256k1) — <a class="text-indigo-600 underline" href="https://www.secg.org/sec2-v2.pdf">secg.org</a></li>
-        <li>A. Antonopoulos, G. Wood, <a class="text-indigo-600 underline" href="https://github.com/ethereumbook/ethereumbook">Mastering Ethereum</a>, chapter "Cryptography"</li>
         <li>NIST SP 800-22, <a class="text-indigo-600 underline" href="https://csrc.nist.gov/pubs/sp/800/22/r1/upd1/final">A Statistical Test Suite for Random and Pseudorandom Number Generators</a></li>
-        <li>S. Nakamoto, <a class="text-indigo-600 underline" href="https://bitcoin.org/bitcoin.pdf">Bitcoin: A Peer-to-Peer Electronic Cash System</a> (section 11)</li>
         <li><a class="text-indigo-600 underline" href="https://ethereum.org/en/developers/docs/consensus-mechanisms/pos/">ethereum.org — Proof of stake</a></li>
       </ul>
     </section>
