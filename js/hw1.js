@@ -61,7 +61,10 @@ function randomKey() {
 function computeBig() {
   const k = randomKey();
   const bits = k.toString(2), ones = [...bits].filter(b => b === '1').length;
-  $('bigK').textContent = `0x${hex(k)} (${bits.length} bits, ${ones} of them equal to 1)`;
+  const lead = 256 - bits.length;   // leading zeros of the 256-bit key
+  $('bigK').textContent = `0x${hex(k)} (256-bit key` +
+    (lead ? `; the first ${lead === 1 ? 'bit is' : `${lead} bits are`} 0, so double-and-add only needs ${bits.length} of them` : '') +
+    `; ${ones} bits equal to 1)`;
 
   $('traceBig').innerHTML = '<tr><th>bit position</th><th>bit of k</th><th>A = 2ⁱG</th><th>R (running result)</th></tr>' +
     doubleAndAddTraceBig(k, BIG_STEPS).map(r =>
@@ -69,7 +72,7 @@ function computeBig() {
     `<tr><td colspan="4" class="text-slate-500">… stopped after ${BIG_STEPS} of ${bits.length} bits</td></tr>`;
 
   const doublings = bits.length - 1, total = doublings + ones;
-  $('bigNote').innerHTML = `<b>How much work in total.</b> This key has ${bits.length} bits, so the full computation needs
+  $('bigNote').innerHTML = `<b>How much work in total.</b> Double-and-add reads ${bits.length} bits of this key, so the full computation needs
     about <b>${doublings} doublings + ${ones} additions ≈ ${total} operations</b>. Repeated addition would need
     k − 1 ≈ <b>${sci(k - 1n)}</b> additions. Even at a billion additions per second that is about
     ${sci((k - 1n) / 31557600000000000n)} years, while double-and-add finishes in a few milliseconds.`;
