@@ -126,6 +126,21 @@
       <div class="overflow-x-auto">
         <table class="tbl mono" id="trace"></table>
       </div>
+
+      <h3 class="h3">The same method with a real 256-bit key</h3>
+      <p class="text-sm text-slate-600 mb-3">
+        Here the curve is the real secp256k1 (p ≈ 2²⁵⁶) and <i>k</i> is a random 256-bit private key. The algorithm and
+        the formulas are exactly the ones above, only the numbers are bigger. The table stops after the first 10 bits:
+        the remaining ones work the same way.
+      </p>
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="newKey" class="btn-2">New random key</button>
+      </div>
+      <p class="text-sm mt-3 break-all"><span class="text-slate-500">k =</span> <span id="bigK" class="mono"></span></p>
+      <div class="overflow-x-auto mt-3">
+        <table class="tbl mono" id="traceBig"></table>
+      </div>
+      <p id="bigNote" class="note"></p>
     </section>
 
     <!-- ============ VISUAL ============ -->

@@ -39,6 +39,44 @@ function compute() {
   resetViz();
 }
 
+// ---------- 2b. double-and-add with a real 256-bit key on secp256k1 ----------
+
+const BIG_STEPS = 10;
+const hex = v => v.toString(16).padStart(64, '0');
+const short = v => { const h = hex(v); return `${h.slice(0, 6)}…${h.slice(-4)}`; };
+const fmtBig = P => P ? `(${short(P.x)}, ${short(P.y)})` : 'O';
+
+// "1.23 × 10^77" for a BigInt too large for a Number
+function sci(v) {
+  const s = v.toString();
+  return `${s[0]}.${s.slice(1, 3)} × 10<sup>${s.length - 1}</sup>`;
+}
+
+function randomKey() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const k = BigInt('0x' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('')) % SECP.n;
+  return k === 0n ? 1n : k;
+}
+
+function computeBig() {
+  const k = randomKey();
+  const bits = k.toString(2), ones = [...bits].filter(b => b === '1').length;
+  $('bigK').textContent = `0x${hex(k)} (${bits.length} bits, ${ones} of them equal to 1)`;
+
+  $('traceBig').innerHTML = '<tr><th>bit position</th><th>bit of k</th><th>A = 2ⁱG</th><th>R (running result)</th></tr>' +
+    doubleAndAddTraceBig(k, BIG_STEPS).map(r =>
+      `<tr><td>${r.i}</td><td>${r.bit}${r.bit ? ' → R = R + A' : ' → skip'}</td><td>${fmtBig(r.A)}</td><td>${fmtBig(r.R)}</td></tr>`).join('') +
+    `<tr><td colspan="4" class="text-slate-500">… stopped after ${BIG_STEPS} of ${bits.length} bits</td></tr>`;
+
+  const doublings = bits.length - 1, total = doublings + ones;
+  $('bigNote').innerHTML = `<b>How much work in total.</b> This key has ${bits.length} bits, so the full computation needs
+    about <b>${doublings} doublings + ${ones} additions ≈ ${total} operations</b>. Repeated addition would need
+    k − 1 ≈ <b>${sci(k - 1n)}</b> additions. Even at a billion additions per second that is about
+    ${sci((k - 1n) / 31557600000000000n)} years, while double-and-add finishes in a few milliseconds.`;
+}
+
+$('newKey').onclick = computeBig;
+
 // ---------- 3. slow-motion visualisation (SVG) ----------
 
 const CELL = 28, PAD = 36;
@@ -201,5 +239,6 @@ $('base').onchange = runStats;
 $('runStats').onclick = runStats;
 
 compute();
+computeBig();
 fillBases();
 runStats();

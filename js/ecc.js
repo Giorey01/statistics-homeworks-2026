@@ -4,10 +4,12 @@
 const mod = (a, p) => ((a % p) + p) % p;
 
 // Modular inverse with the extended Euclidean algorithm: a * inv(a) = 1 (mod p).
+// Works with Numbers and with BigInts (for secp256k1).
 function inv(a, p) {
-  let [r0, r1, s0, s1] = [mod(a, p), p, 1, 0];
-  while (r1 !== 0) {
-    const q = Math.floor(r0 / r1);
+  const big = typeof p === 'bigint', one = big ? 1n : 1, zero = big ? 0n : 0;
+  let [r0, r1, s0, s1] = [mod(a, p), p, one, zero];
+  while (r1 !== zero) {
+    const q = big ? r0 / r1 : Math.floor(r0 / r1);
     [r0, r1] = [r1, r0 - q * r1];
     [s0, s1] = [s1, s0 - q * s1];
   }
@@ -51,6 +53,40 @@ function doubleAndAddTrace(k, G, p) {
     if (bit === 1) R = add(R, A, p);
     rows.push({ i, bit, A, R });
     A = add(A, A, p);
+  }
+  return rows;
+}
+
+// ---------- the real secp256k1 (BigInt): same formulas, 256-bit numbers ----------
+
+const SECP = {
+  p: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn,
+  n: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n, // order of G
+  G: { x: 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n,
+       y: 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n },
+};
+
+function addBig(P, Q, p = SECP.p) {
+  if (P === null) return Q;
+  if (Q === null) return P;
+  if (P.x === Q.x && mod(P.y + Q.y, p) === 0n) return null;
+  const doubling = P.x === Q.x && P.y === Q.y;
+  const num = doubling ? 3n * P.x * P.x : Q.y - P.y;
+  const den = doubling ? 2n * P.y : Q.x - P.x;
+  const lambda = mod(num * inv(den, p), p);
+  const x = mod(lambda * lambda - P.x - Q.x, p);
+  return { x, y: mod(lambda * (P.x - x) - P.y, p) };
+}
+
+// First `steps` rows of double-and-add for a 256-bit key; the loop stops there on purpose.
+function doubleAndAddTraceBig(k, steps, G = SECP.G) {
+  const rows = [];
+  let R = null, A = G;
+  for (let i = 0; i < steps && k > 0n; k >>= 1n, i++) {
+    const bit = Number(k & 1n);
+    if (bit === 1) R = addBig(R, A);
+    rows.push({ i, bit, A, R });
+    A = addBig(A, A);
   }
   return rows;
 }
@@ -165,4 +201,4 @@ function analyse(p, G, rnd = Math.random) {
 }
 
 if (typeof module !== 'undefined')
-  module.exports = { mod, inv, isOnCurve, addStep, add, scalarMult, doubleAndAddTrace, curvePoints, multiples, analyse };
+  module.exports = { mod, inv, isOnCurve, addStep, add, scalarMult, doubleAndAddTrace, SECP, addBig, doubleAndAddTraceBig, curvePoints, multiples, analyse };
