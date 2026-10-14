@@ -18,8 +18,8 @@
       .tbl th { @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50; }
       .tbl td { @apply px-3 py-2 border-b border-slate-100 align-top; }
       .tile  { @apply rounded-xl bg-slate-50 border border-slate-200 p-4; }
-      .tile b { @apply block text-xl font-semibold text-slate-900; }
-      .tile span { @apply text-xs text-slate-500; }
+      .stat > b { @apply block text-xl font-semibold text-slate-900; }
+      .stat > span { @apply text-xs text-slate-500; }
       .note  { @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed; }
       .mono  { @apply font-mono text-[13px]; }
     }
@@ -359,19 +359,18 @@
 
       <div class="grid md:grid-cols-2 gap-4 mt-6 text-sm leading-relaxed">
         <div class="tile">
-          <p class="font-semibold text-slate-900 mb-2">Bitcoin: mining as a random experiment</p>
+          <p class="font-semibold text-slate-900 mb-2">Bitcoin: mining is a lottery</p>
           <ul class="list-disc pl-5 space-y-1">
-            <li>Each hash attempt is a <b>Bernoulli trial</b> with a tiny success probability: the number of attempts is geometric, the time between blocks is approximately <b>exponential</b> (mean 10 minutes) and the blocks per hour are <b>Poisson</b> (mean 6).</li>
-            <li>The <b>difficulty adjustment</b> every 2016 blocks is an estimate of the network's computing power from a sample of waiting times.</li>
-            <li>The <b>double-spend probability</b> in the Bitcoin whitepaper is a random-walk (gambler's ruin) calculation: with 10% of the power and 6 confirmations it is about 0.02%, which is the origin of the "wait 6 blocks" rule.</li>
+            <li>Miners try random numbers until one gives a hash below a target. Each try is a tiny lottery ticket, so finding a block is a matter of luck: on average one block every <b>10 minutes</b>, about <b>6 per hour</b>, but sometimes 2 minutes, sometimes 30. <i>(Poisson / exponential.)</i></li>
+            <li>Every <b>2016 blocks</b> (about two weeks) Bitcoin checks how fast the last blocks came and makes the lottery harder or easier, to keep the 10-minute average. <i>(An estimate from a sample.)</i></li>
+            <li>The whitepaper computes how likely an attacker is to cancel a payment. With <b>10%</b> of the mining power, after <b>6 blocks</b> the chance is about <b>0.02%</b>. That is why exchanges "wait 6 confirmations". <i>(Random walk.)</i></li>
           </ul>
         </div>
         <div class="tile">
-          <p class="font-semibold text-slate-900 mb-2">Ethereum: consensus by random sampling</p>
+          <p class="font-semibold text-slate-900 mb-2">Ethereum: validators chosen by lottery</p>
           <ul class="list-disc pl-5 space-y-1">
-            <li>Every 12 seconds one validator is drawn at random, with probability proportional to its stake, to propose a block.</li>
-            <li>Validators are shuffled into <b>committees</b>: a committee is a random sample of the population, sized so that a dishonest majority has a negligible (binomial-tail) probability.</li>
-            <li><b>BLS signatures</b> can be aggregated thanks to the same kind of algebraic structure studied above.</li>
+            <li>Every <b>12 seconds</b> one validator is picked at random to create the next block. More ETH staked means more chances.</li>
+            <li>Validators are split into random groups (<b>committees</b>) that vote. A random group is like an opinion poll: if it is large enough, it is very unlikely to be controlled by attackers. <i>(Random sampling, binomial tail.)</i></li>
           </ul>
         </div>
       </div>
@@ -396,6 +395,7 @@
       <ul class="list-disc pl-5 mt-3 text-sm space-y-1 text-slate-600">
         <li>A. Corbellini, <a class="text-indigo-600 underline" href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Elliptic Curve Cryptography: a gentle introduction</a></li>
         <li>NIST SP 800-22, <a class="text-indigo-600 underline" href="https://csrc.nist.gov/pubs/sp/800/22/r1/upd1/final">A Statistical Test Suite for Random and Pseudorandom Number Generators</a></li>
+        <li>S. Nakamoto, <a class="text-indigo-600 underline" href="https://bitcoin.org/bitcoin.pdf">Bitcoin: A Peer-to-Peer Electronic Cash System</a> (section 11)</li>
         <li><a class="text-indigo-600 underline" href="https://ethereum.org/en/developers/docs/consensus-mechanisms/pos/">ethereum.org — Proof of stake</a></li>
       </ul>
     </section>

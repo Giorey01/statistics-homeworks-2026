@@ -167,7 +167,7 @@ function runStats() {
     [r.meanX.toFixed(1), `mean of x (uniform: ${((p - 1) / 2).toFixed(1)})`],
     [r.meanY.toFixed(1), `mean of y (uniform: ${((p - 1) / 2).toFixed(1)})`],
     [r.bits, 'bits per coordinate'], [pct(r.avalanche), 'avalanche (bits changed)'],
-  ].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('');
+  ].map(([v, l]) => `<div class="tile stat"><b>${v}</b><span>${l}</span></div>`).join('');
 
   $('smallWarn').classList.toggle('hidden', !small);
   $('smallWarn').innerHTML = `<b>Toy curve.</b> With only ${N} outputs the numbers below describe the data but no
