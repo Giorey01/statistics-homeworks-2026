@@ -18,8 +18,8 @@
       .tbl th { @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50; }
       .tbl td { @apply px-3 py-2 border-b border-slate-100 align-top; }
       .tile  { @apply rounded-xl bg-slate-50 border border-slate-200 p-4; }
-      .stat > b { @apply block text-xl font-semibold text-slate-900; }
-      .stat > span { @apply text-xs text-slate-500; }
+      .tile b { @apply block text-xl font-semibold text-slate-900; }
+      .tile span { @apply text-xs text-slate-500; }
       .note  { @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed; }
       .mono  { @apply font-mono text-[13px]; }
     }
@@ -49,7 +49,7 @@
       <p class="text-sm font-medium text-indigo-600">Homework 1 · Public-key cryptography</p>
       <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">Private key → public key in Ethereum</h1>
       <p class="lead max-w-3xl">
-        A toy version of what an Ethereum wallet does with secp256k1: multiply a base point <i>G</i> by a secret
+        This is a Toy version of what an Ethereum wallet does with secp256k1: multiply a base point <i>G</i> by a secret
         number <i>k</i> and publish the result <i>Q = kG</i>. Going forward is easy; going back from <i>Q</i> to
         <i>k</i> is the <b>Elliptic Curve Discrete Logarithm Problem</b> (ECDLP). This page computes it step by step,
         animates it, and then studies the statistical behaviour of the map <i>k → kG</i>.
@@ -126,21 +126,6 @@
       <div class="overflow-x-auto">
         <table class="tbl mono" id="trace"></table>
       </div>
-
-      <h3 class="h3">The same method with a real 256-bit key</h3>
-      <p class="text-sm text-slate-600 mb-3">
-        Here the curve is the real secp256k1 (p ≈ 2²⁵⁶) and <i>k</i> is a random 256-bit private key. The algorithm and
-        the formulas are exactly the ones above, only the numbers are bigger. The table stops after the first 10 bits:
-        the remaining ones work the same way.
-      </p>
-      <div class="flex flex-wrap items-center gap-3">
-        <button id="newKey" class="btn-2">New random key</button>
-      </div>
-      <p class="text-sm mt-3 break-all"><span class="text-slate-500">k =</span> <span id="bigK" class="mono"></span></p>
-      <div class="overflow-x-auto mt-3">
-        <table class="tbl mono" id="traceBig"></table>
-      </div>
-      <p id="bigNote" class="note"></p>
     </section>
 
     <!-- ============ VISUAL ============ -->
@@ -183,12 +168,6 @@
         the resulting points are studied as data. With p = 17 there are at most 17 outputs, too few for any test, so
         the same curve equation is also used with the prime <b>p = 8191</b> (8011 points, a prime number, as on
         secp256k1).
-      </p>
-      <p class="text-sm text-slate-500 mt-2">
-        <b>How the points were counted.</b> By direct count: for each <i>x</i> from 0 to p − 1, x³ + 7 gives 2 points if
-        it is a nonzero square mod p, 1 if it is 0, none otherwise; then O is added. This takes p steps, fine for 17 and
-        8191. For 256-bit curves the count uses <b>Schoof's algorithm</b> (polynomial time), and <b>Hasse's theorem</b>
-        guarantees it is close to p + 1: |#E − (p + 1)| ≤ 2√p (for p = 17: between 10 and 26; it is 18).
       </p>
 
       <div class="flex flex-wrap items-end gap-3 mt-5">
@@ -359,18 +338,19 @@
 
       <div class="grid md:grid-cols-2 gap-4 mt-6 text-sm leading-relaxed">
         <div class="tile">
-          <p class="font-semibold text-slate-900 mb-2">Bitcoin: mining is a lottery</p>
+          <p class="font-semibold text-slate-900 mb-2">Bitcoin: mining as a random experiment</p>
           <ul class="list-disc pl-5 space-y-1">
-            <li>Miners try random numbers until one gives a hash below a target. Each try is a tiny lottery ticket, so finding a block is a matter of luck: on average one block every <b>10 minutes</b>, about <b>6 per hour</b>, but sometimes 2 minutes, sometimes 30. <i>(Poisson / exponential.)</i></li>
-            <li>Every <b>2016 blocks</b> (about two weeks) Bitcoin checks how fast the last blocks came and makes the lottery harder or easier, to keep the 10-minute average. <i>(An estimate from a sample.)</i></li>
-            <li>The whitepaper computes how likely an attacker is to cancel a payment. With <b>10%</b> of the mining power, after <b>6 blocks</b> the chance is about <b>0.02%</b>. That is why exchanges "wait 6 confirmations". <i>(Random walk.)</i></li>
+            <li>Each hash attempt is a <b>Bernoulli trial</b> with a tiny success probability: the number of attempts is geometric, the time between blocks is approximately <b>exponential</b> (mean 10 minutes) and the blocks per hour are <b>Poisson</b> (mean 6).</li>
+            <li>The <b>difficulty adjustment</b> every 2016 blocks is an estimate of the network's computing power from a sample of waiting times.</li>
+            <li>The <b>double-spend probability</b> in the Bitcoin whitepaper is a random-walk (gambler's ruin) calculation: with 10% of the power and 6 confirmations it is about 0.02%, which is the origin of the "wait 6 blocks" rule.</li>
           </ul>
         </div>
         <div class="tile">
-          <p class="font-semibold text-slate-900 mb-2">Ethereum: validators chosen by lottery</p>
+          <p class="font-semibold text-slate-900 mb-2">Ethereum: consensus by random sampling</p>
           <ul class="list-disc pl-5 space-y-1">
-            <li>Every <b>12 seconds</b> one validator is picked at random to create the next block. More ETH staked means more chances.</li>
-            <li>Validators are split into random groups (<b>committees</b>) that vote. A random group is like an opinion poll: if it is large enough, it is very unlikely to be controlled by attackers. <i>(Random sampling, binomial tail.)</i></li>
+            <li>Every 12 seconds one validator is drawn at random, with probability proportional to its stake, to propose a block.</li>
+            <li>Validators are shuffled into <b>committees</b>: a committee is a random sample of the population, sized so that a dishonest majority has a negligible (binomial-tail) probability.</li>
+            <li><b>BLS signatures</b> can be aggregated thanks to the same kind of algebraic structure studied above.</li>
           </ul>
         </div>
       </div>
@@ -394,9 +374,12 @@
       <h2 class="h2">References</h2>
       <ul class="list-disc pl-5 mt-3 text-sm space-y-1 text-slate-600">
         <li>A. Corbellini, <a class="text-indigo-600 underline" href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Elliptic Curve Cryptography: a gentle introduction</a></li>
+        <li>SEC 2: Recommended Elliptic Curve Domain Parameters (secp256k1) — <a class="text-indigo-600 underline" href="https://www.secg.org/sec2-v2.pdf">secg.org</a></li>
+        <li>A. Antonopoulos, G. Wood, <a class="text-indigo-600 underline" href="https://github.com/ethereumbook/ethereumbook">Mastering Ethereum</a>, chapter "Cryptography"</li>
         <li>NIST SP 800-22, <a class="text-indigo-600 underline" href="https://csrc.nist.gov/pubs/sp/800/22/r1/upd1/final">A Statistical Test Suite for Random and Pseudorandom Number Generators</a></li>
         <li>S. Nakamoto, <a class="text-indigo-600 underline" href="https://bitcoin.org/bitcoin.pdf">Bitcoin: A Peer-to-Peer Electronic Cash System</a> (section 11)</li>
         <li><a class="text-indigo-600 underline" href="https://ethereum.org/en/developers/docs/consensus-mechanisms/pos/">ethereum.org — Proof of stake</a></li>
+        <li>Elliptic Curve Cryptography Overview by F5 DevCentral Community <a class="text-indigo-600 underline" href="https://youtu.be/dCvB-mhkT0w?si=hrYnTejgU4c1gmD7"/></li>
       </ul>
     </section>
   </main>
