@@ -52,7 +52,7 @@
       <p class="text-sm font-medium text-indigo-600">Homework 2 · Hashing, key derivation and cryptographic primitives</p>
       <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">From wallet seed to Ethereum address</h1>
       <p class="lead max-w-3xl">
-        When a cryptocurrency wallet presents a twelve-word mnemonic phrase and subsequently derives an address such as
+        When a cryptocurrency wallet presents a twelve-word mnemonic phrase, subsequently derives an address such as
         <span class="mono">0x9858EfFD…EcaEda94</span>. Between the two there is a chain of six standards, each doing
         one job. This page runs the chain live, explains the role of every piece, and measures the statistical properties each step relies on.
       </p>
@@ -341,29 +341,6 @@
         and addresses that pass every test on this page, and can still be emptied by trying all 2<sup>32</sup> seeds.
         It happened: <a class="underline" href="https://milksad.info/">Milk Sad</a> (2023). Security depends on how many
         inputs are possible, not on how the outputs look.
-      </p>
-    </section>
-
-    <!-- ============ WALLET ============ -->
-    <section class="card" id="wallet">
-      <h2 class="h2">6. The pipeline inside a real wallet</h2>
-      <p class="lead">Where each piece of technology shows up when using MetaMask, Rabby or a similar wallet (with a throwaway account):</p>
-      <div class="overflow-x-auto mt-4">
-        <table class="tbl">
-          <tr><th>What the wallet shows</th><th>What is happening</th></tr>
-          <tr><td>"Write down your 12-word Secret Recovery Phrase"</td><td>BIP-39: entropy generation and word encoding</td></tr>
-          <tr><td>The wallet password</td><td>Local encryption of the stored phrase. It is <i>not</i> the BIP-39 passphrase and takes no part in the derivation</td></tr>
-          <tr><td>"Add account" creates Account 2, 3, …</td><td>BIP-32 / BIP-44: the last index of the path m/44′/60′/0′/0/i grows</td></tr>
-          <tr><td>The address is shown in mixed case</td><td>EIP-55 checksum</td></tr>
-          <tr><td>"Export private key"</td><td>The 256-bit key at that path: the input of secp256k1</td></tr>
-          <tr><td>"Sign" / "Confirm transaction"</td><td>secp256k1 used as public-key cryptography (ECDSA signature)</td></tr>
-          <tr><td>Restoring the phrase in another wallet gives the same accounts</td><td>Everything after the entropy is deterministic</td></tr>
-        </table>
-      </div>
-      <p class="text-sm text-slate-600 mt-3">
-        Check with the live pipeline above: the test phrase gives <span class="mono">0x9858EfFD232B4033E47d90003D41EC34EcaEda94</span>
-        at <span class="mono">m/44'/60'/0'/0/0</span> (Account 1 of any compliant wallet) and
-        <span class="mono">0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0</span> at <span class="mono">…/0/1</span> (Account 2).
       </p>
     </section>
 
