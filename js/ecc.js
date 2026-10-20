@@ -66,6 +66,18 @@ const SECP = {
        y: 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n },
 };
 
+const hex = v => v.toString(16).padStart(64, '0');
+
+const short = v => { const h = hex(v); return `${h.slice(0, 6)}…${h.slice(-4)}`; };
+
+const fmtBig = P => P ? `(${short(P.x)}, ${short(P.y)})` : 'O';
+
+function randomKey() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const k = BigInt('0x' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('')) % SECP.n;
+  return k === 0n ? 1n : k;
+}
+
 function addBig(P, Q, p = SECP.p) {
   if (P === null) return Q;
   if (Q === null) return P;
@@ -76,6 +88,16 @@ function addBig(P, Q, p = SECP.p) {
   const lambda = mod(num * inv(den, p), p);
   const x = mod(lambda * lambda - P.x - Q.x, p);
   return { x, y: mod(lambda * (P.x - x) - P.y, p) };
+}
+
+// k*P on secp256k1: the same double-and-add as scalarMult, with BigInt.
+function mulBig(k, P = SECP.G) {
+  let R = null, A = P;
+  for (; k > 0n; k >>= 1n) {
+    if (k & 1n) R = addBig(R, A);
+    A = addBig(A, A);
+  }
+  return R;
 }
 
 // First `steps` rows of double-and-add for a 256-bit key; the loop stops there on purpose.
@@ -201,4 +223,4 @@ function analyse(p, G, rnd = Math.random) {
 }
 
 if (typeof module !== 'undefined')
-  module.exports = { mod, inv, isOnCurve, addStep, add, scalarMult, doubleAndAddTrace, SECP, addBig, doubleAndAddTraceBig, curvePoints, multiples, analyse };
+  module.exports = { mod, inv, isOnCurve, addStep, add, scalarMult, doubleAndAddTrace, SECP, addBig, mulBig, doubleAndAddTraceBig, curvePoints, multiples, analyse };

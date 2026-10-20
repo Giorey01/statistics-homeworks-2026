@@ -42,20 +42,11 @@ function compute() {
 // ---------- 2b. double-and-add with a real 256-bit key on secp256k1 ----------
 
 const BIG_STEPS = 10;
-const hex = v => v.toString(16).padStart(64, '0');
-const short = v => { const h = hex(v); return `${h.slice(0, 6)}…${h.slice(-4)}`; };
-const fmtBig = P => P ? `(${short(P.x)}, ${short(P.y)})` : 'O';
 
 // "1.23 × 10^77" for a BigInt too large for a Number
 function sci(v) {
   const s = v.toString();
   return `${s[0]}.${s.slice(1, 3)} × 10<sup>${s.length - 1}</sup>`;
-}
-
-function randomKey() {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  const k = BigInt('0x' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('')) % SECP.n;
-  return k === 0n ? 1n : k;
 }
 
 function computeBig() {

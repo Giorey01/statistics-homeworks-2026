@@ -1,6 +1,6 @@
 // Small helpers shared by the two homework pages.
 
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 const pct = (v, digits = 1) => (100 * v).toFixed(digits) + '%';
 
 // A minimal bar chart made of divs. `max` fixes the vertical scale; `ref` draws a dashed reference line.
