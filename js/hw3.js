@@ -154,6 +154,8 @@ function toggleCaesar() {
     : caesarEncrypt($('caesarText').value, k);
   encrypted = !encrypted;
   $('caesarEncDec').textContent = encrypted ? 'Decrypt' : 'Encrypt';
+  $('caesarText').disabled = encrypted ? true : false;
+  $('caesarKey').disabled = encrypted ? true : false;
   $('caesarEncDec').className = encrypted ? 'btn-2' : 'btn';
 }
 
@@ -191,23 +193,23 @@ function eccEncryptLong(text, Q) {
 
 function runCompare() {
   const text = $('statText').value, k = mod(Math.floor(Number($('caesarKey').value)) || 0, 26);
-  const plain = letterCounts(text), caesar = caesarEncrypt(text, k);
-  if (total(plain) < 2) {
+  const plainTextLetterCount = letterCounts(text), caesar = caesarEncrypt(text, k);
+  if (total(plainTextLetterCount) < 2) {
     $('caesarStatNote').textContent = 'The text needs at least two letters.';
     return;
   }
 
-  // Caesar: the same histogram, rotated by k positions
-  const fp = freqs(plain), fc = freqs(letterCounts(caesar)), max = Math.max(...fp, ...fc) * 1.1;
+  // Caesar: the same histogram, shifted by k positions (cyclically: past Z it starts again from A)
+  const fp = freqs(plainTextLetterCount), fc = freqs(letterCounts(caesar)), max = Math.max(...fp, ...fc) * 1.1;
   bars($('histPlain'), fp, [...ALPHA], max, 1 / 26);
   bars($('histCaesar'), fc, [...ALPHA], max, 1 / 26);
   $('histCaesarTitle').textContent = `Caesar ciphertext (k = ${k})`;
 
-  const top = fp.indexOf(Math.max(...fp)), ic = coincidence(plain);
+  const top = fp.indexOf(Math.max(...fp)), ic = coincidence(plainTextLetterCount);
   $('caesarStatNote').innerHTML =
     `The most frequent letter of the message is <b>${ALPHA[top]}</b> (${pct(fp[top])}); in the ciphertext the same
      peak is on <b>${ALPHA[mod(top + k, 26)]}</b> = ${ALPHA[top]} + ${k}. Caesar does not change the shape of the
-     histogram, it only rotates it. The <b>index of coincidence</b> (the probability that two random letters are
+     histogram, it only shifts it by k positions, cyclically.<br> The <b><a class="text-indigo-600 underline" href="https://pages.mtu.edu/~shene/NSF-4/Tutorial/VIG/Vig-IOC.html">index of coincidence</a></b> (the probability that two random letters are
      equal) is ${ic.toFixed(4)} for the message and ${coincidence(letterCounts(caesar)).toFixed(4)} for the
      ciphertext: identical, and close to English (≈ 0.066) rather than to random letters (1/26 ≈ 0.038).`;
 
@@ -307,9 +309,9 @@ function keyByTopLetter(cipher) {
   return mod(counts.indexOf(Math.max(...counts)) - E, 26);
 }
 
-$('corpusInfo').innerHTML = `<b>Jane Austen, <i>Pride and Prejudice</i></b> (Project Gutenberg #1342):
-  ${(TRAIN.length + TEST.length).toLocaleString('en')} letters. The first half (${TRAIN.length.toLocaleString('en')} letters)
-  estimates the frequencies, the second half provides the texts to attack, so the method is never tested on the text
+$('corpusInfo').innerHTML = `For this example I took <b>Jane Austen, <i>Pride and Prejudice</i></b> (Project Gutenberg #1342): it has
+  ${(TRAIN.length + TEST.length).toLocaleString('en')} letters. I use the first half (${TRAIN.length.toLocaleString('en')} letters)
+  to estimate the frequencies, while the second half is used to provide the texts to attack, so the method is never tested on the text
   it learned from (training set and test set). The frequencies are an <i>estimate</i>: another book would give slightly
   different numbers.`;
 bars($('histCorpus'), FREQ, [...ALPHA], undefined, 1 / 26);
@@ -345,6 +347,7 @@ function runBreak() {
 $('breakRun').onclick = runBreak;
 $('breakPart2').onclick = () => { $('breakText').value = caesarEncrypt($('caesarText').value, Number($('caesarKey').value)); runBreak(); };
 $('breakHello').onclick = () => { $('breakText').value = 'KHOOR ZRUOG'; runBreak(); };
+$('breakNeverGonnaGive').onclick = () => { $('breakText').value = caesarEncrypt('NEVER GONNA GIVE YOU UP! NEVER GONNA LET YOU DOWN!', 7); runBreak(); };
 runBreak();
 
 // Success rate of the three methods as a function of the length of the text.

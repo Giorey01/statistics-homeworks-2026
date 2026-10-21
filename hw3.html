@@ -55,13 +55,19 @@
 
     <section id="ecc" class="card">
       <h2 class="h2">1. Encrypting with the elliptic curve</h2>
-      <p class="lead">
-        A public key <i>Q = kG</i> identifies Bob, but by itself it is not a way to send him a secret. The classic scheme
-        built on top of the curve is <b>ElGamal</b>: Alice picks a one-time random number <i>r</i>, combines it with Bob's
-        public key into a shared secret <i>S</i>, uses <i>S</i> to mask the message, and sends a hint <i>R = rG</i> that
-        lets Bob, and only Bob, rebuild <i>S</i>. It all rests on one line:
-      </p>
+      <div class="lead text-slate-500 text-sm">
+        <p>Bob’s public key Q = kG tells everyone who he is, but it doesn’t send him any secret on its own. <b>ElGamal</b> is the classic way to do that:</p>
+        <ul class="list-decimal ml-8 mt-3 mb-1 text-slate-500">
+          <li class="mt-1">Alice picks a random number r, used only once.</li>
+          <li class="mt-1">She computes a shared secret S = rQ and uses it to hide the message.</li>
+          <li class="mt-1">She sends Bob the hint R = rG together with the hidden message.</li>
+          <li class="mt-1">Bob computes S = kR and uncovers the message.</li>
+        </ul>
+        <p class="mt-3">Bob gets the same S because of one line:</p>
+      </div>
       <p class="tile mono text-center mt-4">S = r·Q = r·(k·G) = k·(r·G) = k·R</p>
+      <p class="text-slate-500 mt-3 text-sm">Alice knows r and Bob knows k. They reach the same point from opposite sides. An eavesdropper sees only Q and R, and getting S from those means solving the elliptic-curve discrete log problem, which is believed to be infeasible.</p>
+      <p class="text-xs mt-3 text-slate-500"><b>Other ways to encrypt</b> a text taking advantage of ECC: ECIES (Elliptic Curve Integrated Encryption Scheme), HPKE (Hybrid Public Key Encryption, RFC 9180), ECDH + AES-GCM, Menezes–Vanstone, Identity-Based Encryption (Boneh–Franklin)</p>
       <p class="text-sm text-slate-600 mt-3 leading-relaxed">
         Alice knows <i>r</i> and <i>Q</i>, Bob knows <i>k</i> and <i>R</i>. A man in the middle could see <i>Q</i> and <i>R</i>
         and would need <i>k</i> or <i>r</i>: that is the discrete-logarithm problem of Homework 1.
@@ -156,7 +162,7 @@
       <h2 class="h2">3. Comparing the two schemes</h2>
       <p class="lead">
         Both schemes take a message and a secret and produce a ciphertext, but they differ in who holds the key, in how
-        many keys exist, and above all in what the ciphertext reveals about the message.
+        many keys exist, and in what the ciphertext reveals about the message.
       </p>
 
       <div class="overflow-x-auto mt-4">
@@ -179,21 +185,23 @@
 
       <h3 class="h3">What they have in common</h3>
       <ul class="list-disc pl-6 text-sm text-slate-600 space-y-1 leading-relaxed">
-        <li>The algorithm is public and only the key is secret (Kerckhoffs's principle).</li>
+        <li>The algorithm is public and only the key is secret (<a class="text-indigo-600 underline" href="https://en.wikipedia.org/wiki/Kerckhoffs%27s_principle">Kerckhoffs's principle</a>).</li>
         <li>Both are modular arithmetic: mod 26 for Caesar, mod p for the curve.</li>
         <li>Both hide the message with an invertible mask: Caesar adds k to every letter, the ECC XORs every byte with S.x.
-          The difference is the mask: Caesar uses the <b>same</b> value k, k, k, … at every position, the ECC a sequence
-          of bytes that <b>looks random</b>. That is where the statistical difference below comes from.</li>
-        <li>In both toys the fatal weakness is a key space small enough to try every key (Parts 4 and 5).</li>
+          <br>
+          The difference is the mask: Caesar uses the same value k at every position, the ECC a sequence
+          of bytes that looks random. That is where the statistical difference below comes from.</li>
+        <li>In both toys the weakness is a key space small enough to try every key.</li>
       </ul>
 
-      <h3 class="h3">The experiment: what the ciphertext reveals</h3>
+      <h3 class="h3">What the ciphertext reveals about the frequencies</h3>
       <p class="text-sm text-slate-600 leading-relaxed">
         The same English text is encrypted with Caesar (key k of Part 2) and with the toy ECC (Bob's key of Part 1b).
         The mask S.x is only 32 bytes long, so here the ECC encrypts the text in <b>blocks of 32 bytes, each with a new
         r</b>. Change the text or the Caesar key and press <b>Run</b>.
       </p>
-      <textarea id="statText" rows="5" class="field w-full mt-3">The weather station on the hill records the temperature, the wind and the rain every ten minutes. In the evening the readings are sent to the town, where a small team checks them and writes a short report for the farmers. When the spring comes the reports become longer, because the farmers want to know when the last frost will arrive and when it is safe to plant the seeds. The station is old, and every winter something breaks: one year the wind vane, another year the solar panel that keeps the battery alive. Nobody in the town remembers who built it, but everybody agrees that it should stay, since a century of careful measurements is worth more than any new machine that could replace it.</textarea>
+      <p class="text-xs mt-3 ml-1">The text below comes from <a class="text-indigo-600 underline" href="https://lwn.net/Articles/1101143/">here</a></p>
+      <textarea id="statText" rows="5" class="field w-full">It's Sunday afternoon, and this week I somehow kept my wits together long enough to keep track of the day of the week, so the release isn't randomly delayed. Will wonders never cease? Anyway, nothing very special seems to have happened this last week, so as expected the final 7.3 is out, and thus tomorrow the merge window for 7.4 opens. Except I'm on my annual family vacation, so instead of merging anything first thing in the morning, I'll spend most of the day on a boat and under water. I'll get back to merging in the afternoon, but I expect my schedule to be a bit unusual for a while.</textarea>
       <button id="statRun" class="btn mt-3">Run</button>
 
       <p class="text-sm font-medium text-slate-900 mt-6 mb-2">Caesar: letter frequencies (dashed line = uniform, 1/26)</p>
@@ -218,8 +226,8 @@
       <h2 class="h2">4. Statistical attack on Caesar</h2>
       <p class="lead">
         The Caesar ciphertext keeps the letter frequencies of the message, shifted by <i>k</i>. So the attacker decrypts
-        with all 26 keys and keeps the attempt that <b>looks most like English</b>. To measure "looks like English" we
-        need the letter frequencies of the language, estimated from a long text (a <b>corpus</b>).
+        with all 26 keys and keeps the attempt that looks most like English. To measure this we
+        need the letter frequencies of the language, estimated from a long text (called a <b>corpus</b>).
       </p>
 
       <h3 class="h3">4a. The corpus</h3>
@@ -239,6 +247,7 @@
         <button id="breakRun" class="btn">Break</button>
         <button id="breakPart2" class="btn-2">Use the ciphertext of Part 2</button>
         <button id="breakHello" class="btn-2">Try KHOOR ZRUOG</button>
+        <button id="breakNeverGonnaGive" class="btn-2">Try NEVER GONNA GIVE YOU UP! NEVER GONNA LET YOU DOWN!</button>
       </div>
       <div class="overflow-x-auto mt-4"><table class="tbl mono" id="breakTable"></table></div>
       <div class="note" id="breakNote"></div>
@@ -258,13 +267,13 @@
       <svg id="expChart" viewBox="0 0 640 300" class="w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white"></svg>
       <div class="overflow-x-auto mt-4"><table class="tbl" id="expTable"></table></div>
       <div class="note">
-        <b>Reading the results.</b> With 1 letter χ² always answers "E", so it succeeds about 12% of the time: the
+        <b>Results.</b> With 1 letter χ² always answers "E", so it succeeds about 12% of the time: the
         frequency of E. χ² passes 90% at about 15–20 letters and is almost always right from 30: the longer the text,
-        the closer its frequencies get to the true ones (law of large numbers). "Most frequent = E" throws away 25 letters
+        the closer its frequencies get to the true ones. "Most frequent = E" throws away 25 letters
         out of 26 and needs hundreds of letters; bigrams are right about 97% of the time already with 10. The ± is the
         95% interval 1.96·√(p(1 − p)/T).<br><br>
-        <b>Limits.</b> Short texts (HELLO WORLD above), a different language from the corpus (Italian has few H and many
-        A, I, O), unusual texts (lists of names, a lipogram without E), and the attacker must know it is Caesar: a general
+        <b>Limits.</b> Short texts, a different language from the corpus (Italian has few H and many
+        A, I, O), unusual texts (lists of names, a <a class="text-indigo-600 underline" href="https://en.wikipedia.org/wiki/Lipogram">lipogram</a> without E), and the attacker must know it is Caesar: a general
         substitution or Vigenère needs other methods, still statistical.
       </div>
     </section>
@@ -280,6 +289,7 @@
       <div class="flex flex-wrap items-center gap-3 mt-4">
         <button id="bfRun" class="btn">Start attack</button>
         <button id="bfStop" class="btn-2">Stop</button>
+        <p class="text-xs">Private Key k changes only if the page is refreshed</p>
       </div>
       <div class="h-2 rounded-full bg-slate-200 mt-4 overflow-hidden"><div id="bfBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
       <div class="overflow-x-auto mt-4"><table class="tbl mono" id="bfOut"></table></div>
@@ -292,10 +302,9 @@
       <div class="overflow-x-auto mt-3"><table class="tbl" id="bfScale"></table></div>
       <div class="note">
         On secp256k1 the key is uniform in [1, n − 1] with n ≈ 2<sup>256</sup>. The best known attack is not brute force
-        but <b>Pollard's rho</b> (or baby-step giant-step), about √n ≈ 2<sup>128</sup> point additions: this is why the
-        curve is said to give 128-bit security, still far beyond reach. The exception is a large quantum computer, where
-        <b>Shor's algorithm</b> solves the ECDLP in polynomial time; it does not exist today, and it is why post-quantum
-        schemes (ML-KEM) are being added.
+        but <b>Pollard's rho</b>, about √n ≈ 2<sup>128</sup> point additions: this is why the
+        curve is said to give 128-bit security. The exception is a large quantum computer, where
+        <a class="text-indigo-600 underline" href="https://en.wikipedia.org/wiki/Shor%27s_algorithm"><b>Shor's algorithm</b></a> solves the ECDLP in polynomial time.
       </div>
 
       <h3 class="h3">The two attacks side by side</h3>
@@ -311,8 +320,8 @@
         </table>
       </div>
       <p class="note">
-        <b>The point.</b> Caesar leaks <b>statistical information</b>: a weakness of the design, which no longer key
-        would fix. The toy ECC leaks nothing statistically (Part 3): it breaks <b>only</b> because the key space is
+        Caesar leaks statistical information: a weakness of the design, which no longer key
+        would fix. <br> The toy ECC leaks nothing statistically: it breaks only because the key space is
         small, a weakness of the parameter. With a real 256-bit random key neither statistics nor brute force work.
       </p>
     </section>
