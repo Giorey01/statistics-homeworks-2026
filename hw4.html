@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homework 4 · Modeling a Penetration scheme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+      @layer components {
+        .card {
+          @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8;
+        }
+        .h2 {
+          @apply text-2xl font-semibold tracking-tight text-slate-900;
+        }
+        .h3 {
+          @apply text-lg font-semibold text-slate-900 mt-8 mb-2;
+        }
+        .lead {
+          @apply text-slate-600 mt-2 leading-relaxed;
+        }
+        .btn {
+          @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition;
+        }
+        .btn-2 {
+          @apply inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition;
+        }
+        .field {
+          @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed;
+        }
+        .tbl {
+          @apply w-full text-sm text-left;
+        }
+        .tbl th {
+          @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50;
+        }
+        .tbl td {
+          @apply px-3 py-2 border-b border-slate-100 align-top;
+        }
+        .tile {
+          @apply rounded-xl bg-slate-50 border border-slate-200 p-4;
+        }
+        .note {
+          @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed;
+        }
+        .mono {
+          @apply font-mono text-[13px];
+        }
+        .chart {
+          @apply w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white;
+        }
+      }
+      .font-mono,
+      .mono {
+        font-variant-ligatures: none;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased">
+    <nav
+      class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm"
+      >
+        <a href="index.html" class="font-semibold text-slate-900"
+          >Statistics · Homeworks</a
+        >
+        <div class="hidden md:flex gap-5 text-slate-600">
+          <a href="#model" class="hover:text-indigo-600">Model</a>
+          <a href="#trajectories" class="hover:text-indigo-600">Trajectories</a>
+          <a href="#quantities" class="hover:text-indigo-600"
+            >Three quantities</a
+          >
+          <a href="#lln" class="hover:text-indigo-600">LLN</a>
+          <a href="#variance" class="hover:text-indigo-600">Variance</a>
+          <a href="#clt" class="hover:text-indigo-600">CLT</a>
+          <a href="#attackers" class="hover:text-indigo-600">Attackers</a>
+          <a href="#interpretation" class="hover:text-indigo-600"
+            >Interpretation</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+      <header>
+        <p class="text-sm font-medium text-indigo-600">
+          Homework 4 · Stochastic processes, LLN and CLT
+        </p>
+        <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">
+          n systems, m attackers: Modeling a Penetration scheme
+        </h1>
+      </header>
+
+      <section id="model" class="card">
+        <h2 class="h2">1. The model</h2>
+        <p class="lead">
+          An attacker tries to break <b>n systems</b>, one after the other. Step
+          i is the attack on system i and gives a score X<sub>i</sub>; the score
+          after k systems is S<sub>k</sub> = X<sub>1</sub> + … + X<sub>k</sub>,
+          so the sequence S<sub>1</sub>, S<sub>2</sub>. They are
+          <a
+            href="https://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables"
+            class="underline text-indigo-600"
+            >i.i.d.</a
+          >: independent (the outcome on one system does not affect the next)
+          and identically distributed (all the systems are equally hard to
+          hack). The <b>m attackers</b> are independent copies: each one
+          produces one trajectory. So n is the length of a trajectory and m is
+          the number of trajectories, so in the Monte Carlo repetitions n
+          changes what we look at, m only changes how precisely we see it.
+        </p>
+
+        <h3 class="h3">The two score models</h3>
+        <div class="overflow-x-auto">
+          <table class="tbl">
+            <tr>
+              <th>model</th>
+              <th>values of X<sub>i</sub></th>
+              <th>probabilities</th>
+              <th>mean μ</th>
+              <th>variance σ²</th>
+              <th>meaning</th>
+            </tr>
+            <tr>
+              <td class="font-medium">Bernoulli(p)</td>
+              <td class="mono">0, 1</td>
+              <td class="mono">P(1) = p</td>
+              <td class="mono">p</td>
+              <td class="mono">p(1 − p)</td>
+              <td>
+                1 = system i is breached, 0 = it holds. S<sub>n</sub> counts the
+                breached systems.
+              </td>
+            </tr>
+            <tr>
+              <td class="font-medium">Rademacher</td>
+              <td class="mono">−1, +1</td>
+              <td class="mono text-lg">½, ½</td>
+              <td class="mono">0</td>
+              <td class="mono">1</td>
+              <td>
+                +1 = the attacker advances one level, −1 = go back one level.
+                <br />S<sub>n</sub> is the net progress: attack and defence are
+                even.
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <section id="trajectories" class="card">
+        <h2 class="h2">2. Sample trajectories</h2>
+        <p class="lead">
+          Here is a representation of m attackers trying to breach n systems. In
+          the chart each line is one attacker: on the x axis the system i, on
+          the y axis the score S<sub>i</sub> after the first i systems. A
+          trajectory is one realization of the process (they behave differently
+          every run).
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Model<br />
+            <select id="trajModel" class="field mt-1">
+              <option value="rademacher" selected>Rademacher</option>
+              <option value="bernoulli">Bernoulli</option>
+            </select>
+          </label>
+          <label class="text-sm"
+            >p<br /><input
+              id="trajP"
+              type="number"
+              class="field w-20"
+              value="0.3"
+              min="0"
+              max="1"
+              step="0.05"
+          /></label>
+          <label class="text-sm"
+            >Systems n<br /><input
+              id="trajN"
+              type="number"
+              class="field w-24"
+              value="1000"
+              min="1"
+          /></label>
+          <label class="text-sm"
+            >Attackers shown<br /><input
+              id="trajM"
+              type="number"
+              class="field w-20"
+              value="30"
+              min="1"
+          /></label>
+          <button id="trajRun" class="btn">Simulate</button>
+        </div>
+        <svg id="trajChart" viewBox="0 0 640 300" class="chart"></svg>
+        <div class="note" id="trajNote"></div>
+      </section>
+
+      <section id="quantities" class="card">
+        <h2 class="h2">3. The three quantities</h2>
+        <p class="lead">
+          From the same final scores of the m attackers we build three numbers,
+          which differ only in what S<sub>n</sub> is divided by. With X<sub
+            >i</sub
+          >
+          i.i.d. of mean μ and variance σ², E[S<sub>n</sub>] = nμ and
+          Var(S<sub>n</sub>) = nσ² (variances add up because the steps are
+          independent), and Var(c·Y) = c²·Var(Y). Dividing by n is too much, not
+          dividing is too little, √n is the scale that keeps the variance fixed.
+        </p>
+
+        <h3 class="h3">What the theory predicts</h3>
+        <div class="overflow-x-auto">
+          <table class="tbl">
+            <tr>
+              <th>quantity</th>
+              <th>mean</th>
+              <th>variance</th>
+              <th>as n grows</th>
+            </tr>
+            <tr>
+              <td class="mono">S<sub>n</sub></td>
+              <td class="mono">nμ <span class="text-slate-400">(0)</span></td>
+              <td class="mono">nσ² <span class="text-slate-400">(n)</span></td>
+              <td>spreads out: the width grows like √n</td>
+            </tr>
+            <tr>
+              <td class="mono">S<sub>n</sub>/n</td>
+              <td class="mono">μ <span class="text-slate-400">(0)</span></td>
+              <td class="mono">
+                σ²/n <span class="text-slate-400">(1/n)</span>
+              </td>
+              <td>concentrates on μ: the Law of Large Numbers</td>
+            </tr>
+            <tr>
+              <td class="mono">S<sub>n</sub>/√n</td>
+              <td class="mono">√n·μ <span class="text-slate-400">(0)</span></td>
+              <td class="mono">σ² <span class="text-slate-400">(1)</span></td>
+              <td>
+                the width stays fixed; for Rademacher the shape tends to N(0,
+                1), the Central Limit Theorem. For Bernoulli the mean √n·p runs
+                away
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">
+          In grey: the Rademacher case, μ = 0 and σ² = 1.
+        </p>
+
+        <h3 class="h3">What the simulation gives</h3>
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="text-sm"
+            >Model<br />
+            <select id="simModel" class="field mt-1">
+              <option value="rademacher" selected>Rademacher</option>
+              <option value="bernoulli">Bernoulli</option>
+            </select>
+          </label>
+          <label class="text-sm"
+            >p<br /><input
+              id="simP"
+              type="number"
+              class="field w-20"
+              value="0.3"
+              min="0"
+              max="1"
+              step="0.05"
+          /></label>
+          <label class="text-sm"
+            >Attackers m<br />
+            <select id="simM" class="field mt-1">
+              <option>100</option>
+              <option>1000</option>
+              <option selected>5000</option>
+              <option>10000</option>
+            </select>
+          </label>
+          <button id="simRun" class="btn">Run</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">n = 10, 100, 1000, 10000</p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="simTable"></table>
+        </div>
+
+        <p class="text-sm font-medium text-slate-900 mt-6 mb-2">
+          Histograms (one column per n)
+        </p>
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs text-slate-500 mb-1">S<sub>n</sub></p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="histS"></div>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 mb-1">S<sub>n</sub>/n</p>
+            <div
+              class="grid grid-cols-2 md:grid-cols-4 gap-4"
+              id="histAvg"
+            ></div>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 mb-1">S<sub>n</sub>/√n</p>
+            <div
+              class="grid grid-cols-2 md:grid-cols-4 gap-4"
+              id="histNorm"
+            ></div>
+          </div>
+        </div>
+        <div class="note" id="simNote"></div>
+      </section>
+
+      <section id="lln" class="card">
+        <h2 class="h2">4. Law of Large Numbers</h2>
+        <p class="lead">
+          S<sub>n</sub>/n is the penetration rate of one attacker. The Law of
+          Large Numbers says that it converges <b>in probability</b> to μ: for
+          every margin ε &gt; 0, P(|S<sub>n</sub>/n − μ| &gt; ε) → 0 as n → ∞.
+          The table uses the simulation of Part 3 (same model, p and m) and
+          estimates the probability as the fraction of attackers farther than ε
+          from μ.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >ε<br /><input
+              id="llnEps"
+              type="number"
+              class="field w-20"
+              value="0.05"
+              min="0"
+              step="0.01"
+          /></label>
+          <button id="llnRun" class="btn">Run</button>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="llnTable"></table>
+        </div>
+        <div class="note" id="llnNote"></div>
+      </section>
+
+      <section id="variance" class="card">
+        <h2 class="h2">5. The variance under the three normalizations</h2>
+        <p class="lead">
+          The variances of Part 3 against n, with both axes logarithmic. <br />
+          A power law Var = c·n<sup>a</sup> becomes a straight line, log Var =
+          log c + a log n, whose slope is the exponent a. <br />
+          The theory predicts a = +1 for S<sub>n</sub>, a = −1 for normalization
+          that keeps the variance constant. <br />
+          <b>Dashed lines</b>: theory. <br />
+          <b>Dots</b>: simulation.
+        </p>
+        <svg id="varChart" viewBox="0 0 640 300" class="chart"></svg>
+        <div class="note" id="varNote"></div>
+      </section>
+
+      <section id="clt" class="card">
+        <h2 class="h2">6. Central Limit Theorem</h2>
+        <p class="lead">
+          The LLN says where S<sub>n</sub>/n goes. <br />
+          The Central Limit Theorem says what the fluctuations around it look
+          like at the scale √n: (S<sub>n</sub> − nμ)/(σ√n) converges in
+          distribution to N(0, 1), whatever the law of the single X<sub>i</sub>.
+          In distribution means that the CDF tends to Φ at every point: the
+          <i>shape</i> converges, not the values. In the Rademacher case μ = 0
+          and σ = 1, so the standardized sum is exactly S<sub>n</sub>/√n. Two
+          measures: the histogram as a density against the bell curve φ(z) =
+          e<sup>−z²/2</sup>/√(2π), and the <b>Kolmogorov–Smirnov distance</b> D
+          = max<sub>z</sub>
+          |F<sub>m</sub>(z) − Φ(z)|, the largest gap between the empirical CDF
+          of the m attackers and Φ.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <button id="cltRun" class="btn">Run again</button>
+          <p class="text-xs text-slate-500">
+            m = 5000 attackers, n = 10, 100, 1000, 10000
+          </p>
+        </div>
+
+        <h3 class="h3">Rademacher: S<sub>n</sub>/√n against N(0, 1)</h3>
+        <div
+          class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3"
+          id="cltHist"
+        ></div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="cltTable"></table>
+        </div>
+        <div class="note" id="cltNote"></div>
+      </section>
+
+      <section id="attackers" class="card">
+        <h2 class="h2">7. How many attackers?</h2>
+        <p class="lead">
+          The attackers are independent, so m does
+          <b>not</b> change the law of the score of one attacker. It changes two
+          other things: how precisely the simulation sees that law (the errors
+          of the estimates shrink like 1/√m), and the worst case: the more
+          attackers, the more likely that at least one of them has an extreme
+          score.
+        </p>
+
+        <h3 class="h3">7a. Precision of the estimates</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Rademacher, n = 100, increasing m. In grey the 95% band around the
+          true value: an estimate from m attackers falls inside it 95% of the
+          time, and the band shrinks like 1/√m.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="tbl mono" id="attPrecision"></table>
+        </div>
+
+        <h3 class="h3">7b. The luckiest attacker</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Bernoulli: m attackers against n systems, and for each m the highest
+          number of breached systems. The threshold is np + 2σ√n: by the CLT a
+          single attacker exceeds it with probability q = 1 − Φ(2) ≈ 2.3%, so at
+          least one of m attackers exceeds it with probability 1 − (1 −
+          q)<sup>m</sup>.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-3">
+          <label class="text-sm"
+            >p<br /><input
+              id="attP"
+              type="number"
+              class="field w-20"
+              value="0.3"
+              min="0"
+              max="1"
+              step="0.05"
+          /></label>
+          <label class="text-sm"
+            >Systems n<br /><input
+              id="attN"
+              type="number"
+              class="field w-24"
+              value="1000"
+              min="1"
+          /></label>
+          <button id="attRun" class="btn">Run</button>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="attWorst"></table>
+        </div>
+        <div class="note" id="attNote"></div>
+      </section>
+
+      <section id="interpretation" class="card">
+        <h2 class="h2">8. Interpretation</h2>
+        <h3 class="h3">Systems and attackers</h3>
+        <ul
+          class="list-disc pl-6 text-sm text-slate-600 space-y-1 leading-relaxed"
+        >
+          <li>
+            <b
+              >The total score grows with the size of the system, its relative
+              uncertainty shrinks.</b
+            >
+            E[S<sub>n</sub>] = nμ grows like n, the spread σ√n only like √n.
+            With p = 0.3 and n = 1000 an attacker breaks 300 ± 14.5 systems:
+            more damage in absolute terms, but more predictable in proportion.
+          </li>
+          <li>
+            <b>The penetration rate S<sub>n</sub>/n settles on p (LLN).</b> On
+            many systems one attacker is enough to estimate how good they are.
+            On few systems it is not: with n = 10 an average attacker (p = 0.3)
+            has standard deviation 0.145 on the rate and can look harmless or
+            dangerous by pure chance. Rating an attacker, or a defence, on a
+            handful of systems gives unreliable numbers.
+          </li>
+          <li>
+            <b>The fluctuations are Gaussian at the scale √n (CLT).</b> So they
+            can be bounded in advance: more than np + 2σ√n breaches happens to
+            about 2.3% of the attackers (with n = 1000 and p = 0.3, more than
+            329). This is what lets a defender size alarms and margins.
+          </li>
+          <li>
+            <b>Zero mean is not zero risk (Rademacher).</b> With attack and
+            defence even, nobody wins on average, but a single attacker drifts
+            about √n levels away from 0: with n = 10000 about 5% of them end
+            beyond ±196 levels.
+          </li>
+          <li>
+            <b>The number of attackers m</b> does not change the law of one
+            attacker. It makes the estimates sharper (errors like 1/√m) and,
+            above all, it raises the worst case: with q = 2.3% per attacker, 100
+            attackers give a 90% chance that at least one crosses the threshold,
+            and the highest score grows like σ√n·√(2 ln m). A defender faces the
+            luckiest attacker, not the average one.
+          </li>
+          <li>
+            <b>The aggregate score of all attackers</b> is a sum of n·m i.i.d.
+            steps: mean nmμ, variance nmσ². The same LLN and CLT apply with n·m
+            in place of n, so the overall breach rate is even more concentrated
+            around p (standard deviation √(p(1−p)/(nm))).
+          </li>
+        </ul>
+
+        <h3 class="h3">Limits of the model</h3>
+        <ul
+          class="list-disc pl-6 text-sm text-slate-600 space-y-1 leading-relaxed"
+        >
+          <li>
+            <b>Systems are not identical.</b> Each system has its own
+            p<sub>i</sub>: the steps are independent but not identically
+            distributed. LLN and CLT still hold under mild conditions
+            (Lindeberg), with mean Σp<sub>i</sub> and variance Σp<sub>i</sub>(1
+            − p<sub>i</sub>).
+          </li>
+          <li>
+            <b>Steps are not independent.</b> An attacker who breaks a system
+            reuses what they learned (credentials, lateral movement): positive
+            correlation makes Var(S<sub>n</sub>) grow faster than nσ², and the
+            σ√n margins become too optimistic.
+          </li>
+          <li>
+            <b>Attackers are not independent.</b> They share exploits or
+            coordinate, which makes extreme outcomes more likely than 1 − (1 −
+            q)<sup>m</sup>.
+          </li>
+          <li>
+            <b>The score is a bare count.</b> No severity, no time, no absorbing
+            states (a detected attacker usually stops). The symmetric Rademacher
+            walk is an idealization used to isolate the zero-mean case.
+          </li>
+        </ul>
+      </section>
+    </main>
+    <script src="js/ui.js"></script>
+    <script src="js/hw4.js"></script>
+  </body>
+</html>

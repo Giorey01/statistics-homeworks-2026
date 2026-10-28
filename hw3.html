@@ -1,335 +1,730 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Homework 3 · Encrypting and breaking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style type="text/tailwindcss">
-        @layer components {
-        .card  { @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8; }
-        .h2    { @apply text-2xl font-semibold tracking-tight text-slate-900; }
-        .h3    { @apply text-lg font-semibold text-slate-900 mt-8 mb-2; }
-        .lead  { @apply text-slate-600 mt-2 leading-relaxed; }
-        .btn   { @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition; }
-        .btn-2 { @apply inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition; }
-        .field { @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500; }
-        .tbl   { @apply w-full text-sm text-left; }
-        .tbl th { @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50; }
-        .tbl td { @apply px-3 py-2 border-b border-slate-100 align-top; }
-        .tile  { @apply rounded-xl bg-slate-50 border border-slate-200 p-4; }
-        .note  { @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed; }
-        .mono  { @apply font-mono text-[13px]; }
-        .tag   { @apply inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5; }
-        .tag-secret { @apply inline-block rounded-full bg-rose-100 text-rose-700 text-xs font-medium px-2.5 py-0.5; }
-        .tag-public { @apply inline-block rounded-full bg-slate-200 text-slate-700 text-xs font-medium px-2.5 py-0.5; }
-        .stage { @apply rounded-xl border border-slate-200 bg-white p-4; }
-        .stage p.name { @apply text-xs uppercase tracking-wider text-slate-500; }
-        .stage p.val  { @apply font-mono text-[13px] break-all text-slate-900 mt-1; }
-        .arrow { @apply text-xs text-indigo-600 font-medium pl-4 py-1; }
+      @layer components {
+        .card {
+          @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8;
         }
-        .font-mono, .mono, .val { font-variant-ligatures: none; }
+        .h2 {
+          @apply text-2xl font-semibold tracking-tight text-slate-900;
+        }
+        .h3 {
+          @apply text-lg font-semibold text-slate-900 mt-8 mb-2;
+        }
+        .lead {
+          @apply text-slate-600 mt-2 leading-relaxed;
+        }
+        .btn {
+          @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition;
+        }
+        .btn-2 {
+          @apply inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition;
+        }
+        .field {
+          @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500;
+        }
+        .tbl {
+          @apply w-full text-sm text-left;
+        }
+        .tbl th {
+          @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50;
+        }
+        .tbl td {
+          @apply px-3 py-2 border-b border-slate-100 align-top;
+        }
+        .tile {
+          @apply rounded-xl bg-slate-50 border border-slate-200 p-4;
+        }
+        .note {
+          @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed;
+        }
+        .mono {
+          @apply font-mono text-[13px];
+        }
+        .tag {
+          @apply inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5;
+        }
+        .tag-secret {
+          @apply inline-block rounded-full bg-rose-100 text-rose-700 text-xs font-medium px-2.5 py-0.5;
+        }
+        .tag-public {
+          @apply inline-block rounded-full bg-slate-200 text-slate-700 text-xs font-medium px-2.5 py-0.5;
+        }
+        .stage {
+          @apply rounded-xl border border-slate-200 bg-white p-4;
+        }
+        .stage p.name {
+          @apply text-xs uppercase tracking-wider text-slate-500;
+        }
+        .stage p.val {
+          @apply font-mono text-[13px] break-all text-slate-900 mt-1;
+        }
+        .arrow {
+          @apply text-xs text-indigo-600 font-medium pl-4 py-1;
+        }
+      }
+      .font-mono,
+      .mono,
+      .val {
+        font-variant-ligatures: none;
+      }
     </style>
-    </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
-
-  <nav class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
-    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm">
-      <a href="index.html" class="font-semibold text-slate-900">Statistics · Homeworks</a>
-      <div class="hidden md:flex gap-5 text-slate-600">
-        <a href="#ecc" class="hover:text-indigo-600">ECC</a>
-        <a href="#caesar" class="hover:text-indigo-600">Caesar</a>
-        <a href="#compare" class="hover:text-indigo-600">Comparison</a>
-        <a href="#attack-caesar" class="hover:text-indigo-600">Attack Caesar</a>
-        <a href="#attack-ecc" class="hover:text-indigo-600">Attack ECC</a>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased">
+    <nav
+      class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm"
+      >
+        <a href="index.html" class="font-semibold text-slate-900"
+          >Statistics · Homeworks</a
+        >
+        <div class="hidden md:flex gap-5 text-slate-600">
+          <a href="#ecc" class="hover:text-indigo-600">ECC</a>
+          <a href="#caesar" class="hover:text-indigo-600">Caesar</a>
+          <a href="#compare" class="hover:text-indigo-600">Comparison</a>
+          <a href="#attack-caesar" class="hover:text-indigo-600"
+            >Attack Caesar</a
+          >
+          <a href="#attack-ecc" class="hover:text-indigo-600">Attack ECC</a>
+        </div>
       </div>
-    </div>
-  </nav>
+    </nav>
 
-  <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+    <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+      <header>
+        <p class="text-sm font-medium text-indigo-600">
+          Homework 3 · Encryption and cryptanalysis
+        </p>
+        <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">
+          Encrypting with the curve, and breaking it
+        </h1>
+      </header>
 
-    <header>
-      <p class="text-sm font-medium text-indigo-600">Homework 3 · Encryption and cryptanalysis</p>
-      <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">Encrypting with the curve, and breaking it</h1>
-    </header>
+      <section id="ecc" class="card">
+        <h2 class="h2">1. Encrypting with the elliptic curve</h2>
+        <div class="lead text-slate-500 text-sm">
+          <p>
+            Bob’s public key Q = kG tells everyone who he is, but it doesn’t
+            send him any secret on its own. <b>ElGamal</b> is the classic way to
+            do that:
+          </p>
+          <ul class="list-decimal ml-8 mt-3 mb-1 text-slate-500">
+            <li class="mt-1">Alice picks a random number r, used only once.</li>
+            <li class="mt-1">
+              She computes a shared secret S = rQ and uses it to hide the
+              message.
+            </li>
+            <li class="mt-1">
+              She sends Bob the hint R = rG together with the hidden message.
+            </li>
+            <li class="mt-1">Bob computes S = kR and uncovers the message.</li>
+          </ul>
+          <p class="mt-3">Bob gets the same S because of one line:</p>
+        </div>
+        <p class="tile mono text-center mt-4">
+          S = r·Q = r·(k·G) = k·(r·G) = k·R
+        </p>
+        <p class="text-slate-500 mt-3 text-sm">
+          Alice knows r and Bob knows k. They reach the same point from opposite
+          sides. An eavesdropper sees only Q and R, and getting S from those
+          means solving the elliptic-curve discrete log problem, which is
+          believed to be infeasible.
+        </p>
+        <p class="text-xs mt-3 text-slate-500">
+          <b>Other ways to encrypt</b> a text taking advantage of ECC: ECIES
+          (Elliptic Curve Integrated Encryption Scheme), HPKE (Hybrid Public Key
+          Encryption, RFC 9180), ECDH + AES-GCM, Menezes–Vanstone,
+          Identity-Based Encryption (Boneh–Franklin)
+        </p>
+        <p class="text-sm text-slate-600 mt-3 leading-relaxed">
+          Alice knows <i>r</i> and <i>Q</i>, Bob knows <i>k</i> and <i>R</i>. A
+          man in the middle could see <i>Q</i> and <i>R</i> and would need
+          <i>k</i> or <i>r</i>: that is the discrete-logarithm problem of
+          Homework 1.
+        </p>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+          ElGamal is not the only way. In practice the shared secret of
+          <b>ECDH</b> feeds a symmetric cipher (TLS 1.3, SSH, Signal),
+          <b>ECIES</b> and its modern successor <b>HPKE</b> (RFC 9180) encrypt
+          to a public key, and <b>Massey–Omura</b> and
+          <b>Menezes–Vanstone</b> are older variants that are no longer used.
+          Part 1b below is a simplified ECIES.
+        </p>
 
-    <section id="ecc" class="card">
-      <h2 class="h2">1. Encrypting with the elliptic curve</h2>
-      <div class="lead text-slate-500 text-sm">
-        <p>Bob’s public key Q = kG tells everyone who he is, but it doesn’t send him any secret on its own. <b>ElGamal</b> is the classic way to do that:</p>
-        <ul class="list-decimal ml-8 mt-3 mb-1 text-slate-500">
-          <li class="mt-1">Alice picks a random number r, used only once.</li>
-          <li class="mt-1">She computes a shared secret S = rQ and uses it to hide the message.</li>
-          <li class="mt-1">She sends Bob the hint R = rG together with the hidden message.</li>
-          <li class="mt-1">Bob computes S = kR and uncovers the message.</li>
+        <h3 class="h3">1a. By hand on the toy curve (p = 17)</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          On <span class="mono">y² = x³ + 7 (mod 17)</span> with
+          <span class="mono">G = (1, 5)</span> every point is a multiple of
+          <i>G</i>, and <i>G</i> has order 9. In this version the message itself
+          must be a point, <i>M = mG</i>. Since <i>aG + bG = (a + b)G</i>, every
+          step can be checked by adding the numbers in front of <i>G</i> modulo
+          9.
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="toyMult"></table>
+        </div>
+
+        <div class="flex flex-wrap items-end gap-3 mt-6">
+          <label class="text-sm"
+            >Private key k<br /><input
+              id="toyK"
+              type="number"
+              class="field w-20"
+              value="6"
+              min="1"
+              max="8"
+          /></label>
+          <label class="text-sm"
+            >Message M = mG<br /><input
+              id="toyM"
+              type="number"
+              class="field w-20"
+              value="4"
+              min="1"
+              max="8"
+          /></label>
+          <label class="text-sm"
+            >One-time r<br /><input
+              id="toyR"
+              type="number"
+              class="field w-20"
+              value="2"
+              min="1"
+              max="8"
+          /></label>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="toySteps"></table>
+        </div>
+
+        <p class="text-sm font-medium text-slate-900 mt-6 mb-2">
+          Same k and M, every possible r
+        </p>
+        <div class="overflow-x-auto">
+          <table class="tbl mono" id="toyAllR"></table>
+        </div>
+        <div class="note" id="toyNote"></div>
+
+        <h3 class="h3">1b. On the real secp256k1, with a small key</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Here the curve is the real secp256k1 (the parameters of Ethereum), but
+          the private key is restricted to
+          <span class="mono">1 ≤ k ≤ 2²⁰</span>, about a million values, so that
+          Part 5 can attack it. A text is not a point, so, as in <b>ECIES</b>,
+          the shared secret <i>S</i> becomes the key of a symmetric cipher: the
+          message bytes are XORed with the 32 bytes of <i>S.x</i>. The message
+          can therefore be at most 32 bytes long.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Message (max 32 bytes)<br /><input
+              id="eccText"
+              class="field w-72"
+              value="WAKE UP!"
+          /></label>
+          <button id="eccEnc" class="btn">Encrypt again</button>
+          <button id="eccKey" class="btn-2">New key for Bob</button>
+          <p id="bobKey"></p>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="eccSteps"></table>
+        </div>
+        <div class="note" id="eccNote"></div>
+
+        <h3 class="h3">Who knows what</h3>
+        <div class="overflow-x-auto">
+          <table class="tbl">
+            <tr>
+              <th>value</th>
+              <th>owner</th>
+              <th>status</th>
+              <th>role</th>
+            </tr>
+            <tr>
+              <td class="mono">G, p, n</td>
+              <td>everyone</td>
+              <td>public, fixed by the standard</td>
+              <td>define the curve</td>
+            </tr>
+            <tr>
+              <td class="mono">k</td>
+              <td>Bob</td>
+              <td>secret forever</td>
+              <td>decrypt: S = kR</td>
+            </tr>
+            <tr>
+              <td class="mono">Q = kG</td>
+              <td>Bob</td>
+              <td>public</td>
+              <td>lets anyone encrypt for Bob</td>
+            </tr>
+            <tr>
+              <td class="mono">r</td>
+              <td>Alice</td>
+              <td>secret, discarded after use</td>
+              <td>makes every encryption different</td>
+            </tr>
+            <tr>
+              <td class="mono">R = rG</td>
+              <td>ciphertext</td>
+              <td>public</td>
+              <td>lets Bob rebuild S</td>
+            </tr>
+            <tr>
+              <td class="mono">S = rQ = kR</td>
+              <td>Alice and Bob</td>
+              <td>never transmitted</td>
+              <td>the mask (key of the XOR)</td>
+            </tr>
+            <tr>
+              <td class="mono">c</td>
+              <td>ciphertext</td>
+              <td>public</td>
+              <td>the masked message</td>
+            </tr>
+          </table>
+        </div>
+        <div class="note">
+          <b>This is a toy.</b> The private key has only 20 bits, the mask is
+          S.x used directly instead of passing it through a key-derivation
+          function, the message is limited to 32 bytes, and nothing protects the
+          ciphertext from being modified. Part 5 shows how the small key is
+          broken.
+        </div>
+      </section>
+
+      <section id="caesar" class="card">
+        <h2 class="h2">2. The Caesar cipher</h2>
+        <p class="lead">
+          Each letter is shifted forward by <i>k</i> positions in the alphabet
+          (with wrap-around: Z + 1 = A). Decryption shifts back by <i>k</i>. The
+          same key is used for both, so it is a <b>symmetric</b> cipher.
+        </p>
+
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Message<br />
+            <input id="caesarText" class="field w-72" value="WAKE ME UP!" />
+          </label>
+          <label class="text-sm"
+            >Key k<br />
+            <input
+              id="caesarKey"
+              type="number"
+              class="field w-20"
+              value="3"
+              min="0"
+              max="25"
+            />
+          </label>
+          <button id="caesarEncDec" class="btn">Encrypt</button>
+        </div>
+
+        <div class="tile mt-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Result</p>
+          <p id="caesarOut" class="mono mt-1"></p>
+        </div>
+      </section>
+
+      <section id="compare" class="card">
+        <h2 class="h2">3. Comparing the two schemes</h2>
+        <p class="lead">
+          Both schemes take a message and a secret and produce a ciphertext, but
+          they differ in who holds the key, in how many keys exist, and in what
+          the ciphertext reveals about the message.
+        </p>
+
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl">
+            <tr>
+              <th></th>
+              <th>Caesar</th>
+              <th>Toy ECC (Part 1b)</th>
+            </tr>
+            <tr>
+              <td class="font-medium">Type</td>
+              <td>
+                <b>symmetric</b>: one key, the same to encrypt and to decrypt
+              </td>
+              <td>
+                <b>asymmetric</b>: public Q to encrypt, private k to decrypt
+              </td>
+            </tr>
+            <tr>
+              <td class="font-medium">Key exchange</td>
+              <td>must be agreed <b>beforehand</b>, in secret</td>
+              <td>not needed: Q is published</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Encryption</td>
+              <td>shift each letter forward by k</td>
+              <td>pick r, R = rG, S = rQ, c = m ⊕ S.x</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Decryption</td>
+              <td>shift each letter back by k</td>
+              <td>S = kR, m = c ⊕ S.x</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Arithmetic</td>
+              <td>addition mod 26</td>
+              <td>point addition mod p (a 256-bit prime), then XOR</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Unit encrypted</td>
+              <td>the letter (26 symbols)</td>
+              <td>the byte (256 symbols)</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Number of keys</td>
+              <td>26 (≈ 4.7 bits)</td>
+              <td>
+                2<sup>20</sup> ≈ 10<sup>6</sup> (20 bits) here; ≈ 2<sup
+                  >256</sup
+                >
+                on the real curve
+              </td>
+            </tr>
+            <tr>
+              <td class="font-medium">Same message twice</td>
+              <td><b>same</b> ciphertext (deterministic)</td>
+              <td><b>different</b> ciphertext each time (r is random)</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Ciphertext length</td>
+              <td>same as the message</td>
+              <td>R (a point, 64 bytes) + the length of the message</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Repeated letters</td>
+              <td>stay repeated: ATTACK → DWWDFN</td>
+              <td>
+                become different bytes: each position has its own mask byte
+              </td>
+            </tr>
+            <tr>
+              <td class="font-medium">Statistics of the ciphertext</td>
+              <td>
+                the letter frequencies of the message, <b>shifted by k</b>
+              </td>
+              <td>bytes that look <b>uniform</b>; only the length leaks</td>
+            </tr>
+            <tr>
+              <td class="font-medium">How it breaks</td>
+              <td>letter statistics, or trying the 26 keys</td>
+              <td>
+                only by trying every k, possible because there are just 2<sup
+                  >20</sup
+                >
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <h3 class="h3">What they have in common</h3>
+        <ul
+          class="list-disc pl-6 text-sm text-slate-600 space-y-1 leading-relaxed"
+        >
+          <li>
+            The algorithm is public and only the key is secret (<a
+              class="text-indigo-600 underline"
+              href="https://en.wikipedia.org/wiki/Kerckhoffs%27s_principle"
+              >Kerckhoffs's principle</a
+            >).
+          </li>
+          <li>
+            Both are modular arithmetic: mod 26 for Caesar, mod p for the curve.
+          </li>
+          <li>
+            Both hide the message with an invertible mask: Caesar adds k to
+            every letter, the ECC XORs every byte with S.x.
+            <br />
+            The difference is the mask: Caesar uses the same value k at every
+            position, the ECC a sequence of bytes that looks random. That is
+            where the statistical difference below comes from.
+          </li>
+          <li>
+            In both toys the weakness is a key space small enough to try every
+            key.
+          </li>
         </ul>
-        <p class="mt-3">Bob gets the same S because of one line:</p>
-      </div>
-      <p class="tile mono text-center mt-4">S = r·Q = r·(k·G) = k·(r·G) = k·R</p>
-      <p class="text-slate-500 mt-3 text-sm">Alice knows r and Bob knows k. They reach the same point from opposite sides. An eavesdropper sees only Q and R, and getting S from those means solving the elliptic-curve discrete log problem, which is believed to be infeasible.</p>
-      <p class="text-xs mt-3 text-slate-500"><b>Other ways to encrypt</b> a text taking advantage of ECC: ECIES (Elliptic Curve Integrated Encryption Scheme), HPKE (Hybrid Public Key Encryption, RFC 9180), ECDH + AES-GCM, Menezes–Vanstone, Identity-Based Encryption (Boneh–Franklin)</p>
-      <p class="text-sm text-slate-600 mt-3 leading-relaxed">
-        Alice knows <i>r</i> and <i>Q</i>, Bob knows <i>k</i> and <i>R</i>. A man in the middle could see <i>Q</i> and <i>R</i>
-        and would need <i>k</i> or <i>r</i>: that is the discrete-logarithm problem of Homework 1.
-      </p>
-      <p class="text-sm text-slate-500 mt-2 leading-relaxed">
-        ElGamal is not the only way. In practice the shared secret of <b>ECDH</b> feeds a symmetric cipher (TLS 1.3, SSH,
-        Signal), <b>ECIES</b> and its modern successor <b>HPKE</b> (RFC 9180) encrypt to a public key, and
-        <b>Massey–Omura</b> and <b>Menezes–Vanstone</b> are older variants that are no longer used. Part 1b below is a
-        simplified ECIES.
-      </p>
 
-      <h3 class="h3">1a. By hand on the toy curve (p = 17)</h3>
-      <p class="text-sm text-slate-600 leading-relaxed">
-        On <span class="mono">y² = x³ + 7 (mod 17)</span> with <span class="mono">G = (1, 5)</span> every point is a
-        multiple of <i>G</i>, and <i>G</i> has order 9. In this version the message itself must be a point,
-        <i>M = mG</i>. Since <i>aG + bG = (a + b)G</i>, every step can be checked by adding the numbers in front of
-        <i>G</i> modulo 9.
-      </p>
-      <div class="overflow-x-auto mt-3"><table class="tbl mono" id="toyMult"></table></div>
+        <h3 class="h3">What the ciphertext reveals about the frequencies</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          The same English text is encrypted with Caesar (key k of Part 2) and
+          with the toy ECC (Bob's key of Part 1b). The mask S.x is only 32 bytes
+          long, so here the ECC encrypts the text in
+          <b>blocks of 32 bytes, each with a new r</b>. Change the text or the
+          Caesar key and press <b>Run</b>.
+        </p>
+        <p class="text-xs mt-3 ml-1">
+          The text below comes from
+          <a
+            class="text-indigo-600 underline"
+            href="https://lwn.net/Articles/1101143/"
+            >here</a
+          >
+        </p>
+        <textarea id="statText" rows="5" class="field w-full">
+It's Sunday afternoon, and this week I somehow kept my wits together long enough to keep track of the day of the week, so the release isn't randomly delayed. Will wonders never cease? Anyway, nothing very special seems to have happened this last week, so as expected the final 7.3 is out, and thus tomorrow the merge window for 7.4 opens. Except I'm on my annual family vacation, so instead of merging anything first thing in the morning, I'll spend most of the day on a boat and under water. I'll get back to merging in the afternoon, but I expect my schedule to be a bit unusual for a while.</textarea
+        >
+        <button id="statRun" class="btn mt-3">Run</button>
 
-      <div class="flex flex-wrap items-end gap-3 mt-6">
-        <label class="text-sm">Private key k<br><input id="toyK" type="number" class="field w-20" value="6" min="1" max="8"></label>
-        <label class="text-sm">Message M = mG<br><input id="toyM" type="number" class="field w-20" value="4" min="1" max="8"></label>
-        <label class="text-sm">One-time r<br><input id="toyR" type="number" class="field w-20" value="2" min="1" max="8"></label>
-      </div>
-      <div class="overflow-x-auto mt-4"><table class="tbl mono" id="toySteps"></table></div>
+        <p class="text-sm font-medium text-slate-900 mt-6 mb-2">
+          Caesar: letter frequencies (dashed line = uniform, 1/26)
+        </p>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <p class="text-xs text-slate-500 mb-1">Message</p>
+            <div id="histPlain"></div>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 mb-1" id="histCaesarTitle">
+              Caesar ciphertext
+            </p>
+            <div id="histCaesar"></div>
+          </div>
+        </div>
+        <div class="note" id="caesarStatNote"></div>
 
-      <p class="text-sm font-medium text-slate-900 mt-6 mb-2">Same k and M, every possible r</p>
-      <div class="overflow-x-auto"><table class="tbl mono" id="toyAllR"></table></div>
-      <div class="note" id="toyNote"></div>
+        <p class="text-sm font-medium text-slate-900 mt-6 mb-2">
+          ECC: byte values in 16 classes of 16 values (dashed line = uniform,
+          1/16)
+        </p>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <p class="text-xs text-slate-500 mb-1">Message bytes</p>
+            <div id="histBytesPlain"></div>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 mb-1">ECC ciphertext bytes</p>
+            <div id="histBytesEcc"></div>
+          </div>
+        </div>
 
-      <h3 class="h3">1b. On the real secp256k1, with a small key</h3>
-      <p class="text-sm text-slate-600 leading-relaxed">
-        Here the curve is the real secp256k1 (the parameters of Ethereum), but the private key is restricted to
-        <span class="mono">1 ≤ k ≤ 2²⁰</span>, about a million values, so that Part 5 can attack it. A text is not a point,
-        so, as in <b>ECIES</b>, the shared secret <i>S</i> becomes the key of a symmetric cipher: the message bytes are
-        XORed with the 32 bytes of <i>S.x</i>. The message can therefore be at most 32 bytes long.
-      </p>
-      <div class="flex flex-wrap items-end gap-3 mt-4">
-        <label class="text-sm">Message (max 32 bytes)<br><input id="eccText" class="field w-72" value="WAKE UP!"></label>
-        <button id="eccEnc" class="btn">Encrypt again</button>
-        <button id="eccKey" class="btn-2">New key for Bob</button>
-        <p id="bobKey"></p>
-      </div>
-      <div class="overflow-x-auto mt-4"><table class="tbl mono" id="eccSteps"></table></div>
-      <div class="note" id="eccNote"></div>
+        <p class="text-sm font-medium text-slate-900 mt-6 mb-2">
+          Chi-square test against uniform bytes
+        </p>
+        <div class="overflow-x-auto">
+          <table class="tbl" id="statChi"></table>
+        </div>
+        <div class="note" id="eccStatNote"></div>
+      </section>
 
-      <h3 class="h3">Who knows what</h3>
-      <div class="overflow-x-auto">
-        <table class="tbl">
-          <tr><th>value</th><th>owner</th><th>status</th><th>role</th></tr>
-          <tr><td class="mono">G, p, n</td><td>everyone</td><td>public, fixed by the standard</td><td>define the curve</td></tr>
-          <tr><td class="mono">k</td><td>Bob</td><td>secret forever</td><td>decrypt: S = kR</td></tr>
-          <tr><td class="mono">Q = kG</td><td>Bob</td><td>public</td><td>lets anyone encrypt for Bob</td></tr>
-          <tr><td class="mono">r</td><td>Alice</td><td>secret, discarded after use</td><td>makes every encryption different</td></tr>
-          <tr><td class="mono">R = rG</td><td>ciphertext</td><td>public</td><td>lets Bob rebuild S</td></tr>
-          <tr><td class="mono">S = rQ = kR</td><td>Alice and Bob</td><td>never transmitted</td><td>the mask (key of the XOR)</td></tr>
-          <tr><td class="mono">c</td><td>ciphertext</td><td>public</td><td>the masked message</td></tr>
-        </table>
-      </div>
-      <div class="note">
-        <b>This is a toy.</b> The private key has only 20 bits, the mask is S.x used directly instead of passing it through
-        a key-derivation function, the message is limited to 32 bytes, and nothing protects the ciphertext from being
-        modified. Part 5 shows how the small key is broken.
-      </div>
-    </section>
+      <section id="attack-caesar" class="card">
+        <h2 class="h2">4. Statistical attack on Caesar</h2>
+        <p class="lead">
+          The Caesar ciphertext keeps the letter frequencies of the message,
+          shifted by <i>k</i>. So the attacker decrypts with all 26 keys and
+          keeps the attempt that looks most like English. To measure this we
+          need the letter frequencies of the language, estimated from a long
+          text (called a <b>corpus</b>).
+        </p>
 
-    <section id="caesar" class="card">
-      <h2 class="h2">2. The Caesar cipher</h2>
-      <p class="lead">
-        Each letter is shifted forward by <i>k</i> positions in the alphabet (with wrap-around: Z + 1 = A).
-        Decryption shifts back by <i>k</i>. The same key is used for both, so it is a <b>symmetric</b> cipher.
-      </p>
+        <h3 class="h3">4a. The corpus</h3>
+        <p class="text-sm text-slate-600 leading-relaxed" id="corpusInfo"></p>
+        <div class="mt-3">
+          <p class="text-xs text-slate-500 mb-1">
+            Letter frequencies of English, estimated on the first half (dashed
+            line = 1/26)
+          </p>
+          <div id="histCorpus"></div>
+        </div>
 
-      <div class="flex flex-wrap items-end gap-3 mt-4">
-        <label class="text-sm">Message<br>
-          <input id="caesarText" class="field w-72" value="WAKE ME UP!">
-        </label>
-        <label class="text-sm">Key k<br>
-          <input id="caesarKey" type="number" class="field w-20" value="3" min="0" max="25">
-        </label>
-        <button id="caesarEncDec" class="btn">Encrypt</button>
-      </div>
+        <h3 class="h3">4b. Breaking one ciphertext</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          For every key the decrypted text gets a score. <b>χ²</b> compares its
+          letter counts O<sub>i</sub> with the counts expected in English E<sub
+            >i</sub
+          >
+          = N·f<sub>i</sub>: χ² = Σ (O<sub>i</sub> − E<sub>i</sub>)² /
+          E<sub>i</sub>, smaller is better. Here χ² is a
+          <b>score to rank 26 candidates</b>, not a hypothesis test: with a few
+          letters E<sub>i</sub> is far below 5 and the χ² distribution does not
+          apply. The <b>bigram</b> score also uses the order of the letters: it
+          adds the log-probabilities of every pair of consecutive letters (TH,
+          HE, IN, …), larger is better.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Ciphertext<br /><input
+              id="breakText"
+              class="field w-80 mono"
+              value="WKLV LV D VHFUHW PHVVDJH"
+          /></label>
+          <button id="breakRun" class="btn">Break</button>
+          <button id="breakPart2" class="btn-2">
+            Use the ciphertext of Part 2
+          </button>
+          <button id="breakHello" class="btn-2">Try KHOOR ZRUOG</button>
+          <button id="breakNeverGonnaGive" class="btn-2">
+            Try NEVER GONNA GIVE YOU UP! NEVER GONNA LET YOU DOWN!
+          </button>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="breakTable"></table>
+        </div>
+        <div class="note" id="breakNote"></div>
 
-      <div class="tile mt-4">
-        <p class="text-xs uppercase tracking-wider text-slate-500">Result</p>
-        <p id="caesarOut" class="mono mt-1"></p>
-      </div>
-    </section>
+        <h3 class="h3">4c. How many letters are needed?</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Monte Carlo simulation: for each length L, take a random piece of L
+          letters from the <b>second half</b> of the corpus (never used to
+          estimate the frequencies), encrypt it with a random key, attack it,
+          and count a success when the decrypted text equals the original. Three
+          methods: χ², bigrams, and the naive "the most frequent letter is E".
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Trials per length<br />
+            <select id="expTrials" class="field mt-1">
+              <option>200</option>
+              <option selected>500</option>
+              <option>2000</option>
+            </select>
+          </label>
+          <button id="expRun" class="btn">Run experiment</button>
+        </div>
+        <svg
+          id="expChart"
+          viewBox="0 0 640 300"
+          class="w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white"
+        ></svg>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl" id="expTable"></table>
+        </div>
+        <div class="note">
+          <b>Results.</b> With 1 letter χ² always answers "E", so it succeeds
+          about 12% of the time: the frequency of E. χ² passes 90% at about
+          15–20 letters and is almost always right from 30: the longer the text,
+          the closer its frequencies get to the true ones. "Most frequent = E"
+          throws away 25 letters out of 26 and needs hundreds of letters;
+          bigrams are right about 97% of the time already with 10. The ± is the
+          95% interval 1.96·√(p(1 − p)/T).<br /><br />
+          <b>Limits.</b> Short texts, a different language from the corpus
+          (Italian has few H and many A, I, O), unusual texts (lists of names, a
+          <a
+            class="text-indigo-600 underline"
+            href="https://en.wikipedia.org/wiki/Lipogram"
+            >lipogram</a
+          >
+          without E), and the attacker must know it is Caesar: a general
+          substitution or Vigenère needs other methods, still statistical.
+        </div>
+      </section>
 
-    <section id="compare" class="card">
-      <h2 class="h2">3. Comparing the two schemes</h2>
-      <p class="lead">
-        Both schemes take a message and a secret and produce a ciphertext, but they differ in who holds the key, in how
-        many keys exist, and in what the ciphertext reveals about the message.
-      </p>
+      <section id="attack-ecc" class="card">
+        <h2 class="h2">5. Brute-forcing the small ECC key</h2>
+        <p class="lead">
+          The attacker sees Bob's public key <i>Q</i> and the intercepted
+          ciphertext (<i>R</i>, <i>c</i>) of Part 1b, and knows (Kerckhoffs)
+          that 1 ≤ <i>k</i> ≤ 2<sup>20</sup>. They try every key: 1·G = Q? 2·G =
+          Q? … Instead of a full multiplication per try, each candidate is the
+          previous one plus <i>G</i>: (i + 1)G = iG + G,
+          <b>one point addition per key</b>. Once <i>k</i> is found, they
+          decrypt exactly like Bob: S = kR, then XOR.
+        </p>
+        <div class="flex flex-wrap items-center gap-3 mt-4">
+          <button id="bfRun" class="btn">Start attack</button>
+          <button id="bfStop" class="btn-2">Stop</button>
+          <p class="text-xs">
+            Private Key k changes only if the page is refreshed
+          </p>
+        </div>
+        <div class="h-2 rounded-full bg-slate-200 mt-4 overflow-hidden">
+          <div id="bfBar" class="h-full bg-indigo-500" style="width: 0%"></div>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="bfOut"></table>
+        </div>
 
-      <div class="overflow-x-auto mt-4">
-        <table class="tbl">
-          <tr><th></th><th>Caesar</th><th>Toy ECC (Part 1b)</th></tr>
-          <tr><td class="font-medium">Type</td><td><b>symmetric</b>: one key, the same to encrypt and to decrypt</td><td><b>asymmetric</b>: public Q to encrypt, private k to decrypt</td></tr>
-          <tr><td class="font-medium">Key exchange</td><td>must be agreed <b>beforehand</b>, in secret</td><td>not needed: Q is published</td></tr>
-          <tr><td class="font-medium">Encryption</td><td>shift each letter forward by k</td><td>pick r, R = rG, S = rQ, c = m ⊕ S.x</td></tr>
-          <tr><td class="font-medium">Decryption</td><td>shift each letter back by k</td><td>S = kR, m = c ⊕ S.x</td></tr>
-          <tr><td class="font-medium">Arithmetic</td><td>addition mod 26</td><td>point addition mod p (a 256-bit prime), then XOR</td></tr>
-          <tr><td class="font-medium">Unit encrypted</td><td>the letter (26 symbols)</td><td>the byte (256 symbols)</td></tr>
-          <tr><td class="font-medium">Number of keys</td><td>26 (≈ 4.7 bits)</td><td>2<sup>20</sup> ≈ 10<sup>6</sup> (20 bits) here; ≈ 2<sup>256</sup> on the real curve</td></tr>
-          <tr><td class="font-medium">Same message twice</td><td><b>same</b> ciphertext (deterministic)</td><td><b>different</b> ciphertext each time (r is random)</td></tr>
-          <tr><td class="font-medium">Ciphertext length</td><td>same as the message</td><td>R (a point, 64 bytes) + the length of the message</td></tr>
-          <tr><td class="font-medium">Repeated letters</td><td>stay repeated: ATTACK → DWWDFN</td><td>become different bytes: each position has its own mask byte</td></tr>
-          <tr><td class="font-medium">Statistics of the ciphertext</td><td>the letter frequencies of the message, <b>shifted by k</b></td><td>bytes that look <b>uniform</b>; only the length leaks</td></tr>
-          <tr><td class="font-medium">How it breaks</td><td>letter statistics, or trying the 26 keys</td><td>only by trying every k, possible because there are just 2<sup>20</sup></td></tr>
-        </table>
-      </div>
+        <h3 class="h3">Why it fails on a real key</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Every extra bit doubles the work. The times below use the speed
+          measured on <b>this</b> computer by the attack above (worst case: all
+          the keys).
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl" id="bfScale"></table>
+        </div>
+        <div class="note">
+          On secp256k1 the key is uniform in [1, n − 1] with n ≈
+          2<sup>256</sup>. The best known attack is not brute force but
+          <b>Pollard's rho</b>, about √n ≈ 2<sup>128</sup> point additions: this
+          is why the curve is said to give 128-bit security. The exception is a
+          large quantum computer, where
+          <a
+            class="text-indigo-600 underline"
+            href="https://en.wikipedia.org/wiki/Shor%27s_algorithm"
+            ><b>Shor's algorithm</b></a
+          >
+          solves the ECDLP in polynomial time.
+        </div>
 
-      <h3 class="h3">What they have in common</h3>
-      <ul class="list-disc pl-6 text-sm text-slate-600 space-y-1 leading-relaxed">
-        <li>The algorithm is public and only the key is secret (<a class="text-indigo-600 underline" href="https://en.wikipedia.org/wiki/Kerckhoffs%27s_principle">Kerckhoffs's principle</a>).</li>
-        <li>Both are modular arithmetic: mod 26 for Caesar, mod p for the curve.</li>
-        <li>Both hide the message with an invertible mask: Caesar adds k to every letter, the ECC XORs every byte with S.x.
-          <br>
-          The difference is the mask: Caesar uses the same value k at every position, the ECC a sequence
-          of bytes that looks random. That is where the statistical difference below comes from.</li>
-        <li>In both toys the weakness is a key space small enough to try every key.</li>
-      </ul>
-
-      <h3 class="h3">What the ciphertext reveals about the frequencies</h3>
-      <p class="text-sm text-slate-600 leading-relaxed">
-        The same English text is encrypted with Caesar (key k of Part 2) and with the toy ECC (Bob's key of Part 1b).
-        The mask S.x is only 32 bytes long, so here the ECC encrypts the text in <b>blocks of 32 bytes, each with a new
-        r</b>. Change the text or the Caesar key and press <b>Run</b>.
-      </p>
-      <p class="text-xs mt-3 ml-1">The text below comes from <a class="text-indigo-600 underline" href="https://lwn.net/Articles/1101143/">here</a></p>
-      <textarea id="statText" rows="5" class="field w-full">It's Sunday afternoon, and this week I somehow kept my wits together long enough to keep track of the day of the week, so the release isn't randomly delayed. Will wonders never cease? Anyway, nothing very special seems to have happened this last week, so as expected the final 7.3 is out, and thus tomorrow the merge window for 7.4 opens. Except I'm on my annual family vacation, so instead of merging anything first thing in the morning, I'll spend most of the day on a boat and under water. I'll get back to merging in the afternoon, but I expect my schedule to be a bit unusual for a while.</textarea>
-      <button id="statRun" class="btn mt-3">Run</button>
-
-      <p class="text-sm font-medium text-slate-900 mt-6 mb-2">Caesar: letter frequencies (dashed line = uniform, 1/26)</p>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div><p class="text-xs text-slate-500 mb-1">Message</p><div id="histPlain"></div></div>
-        <div><p class="text-xs text-slate-500 mb-1" id="histCaesarTitle">Caesar ciphertext</p><div id="histCaesar"></div></div>
-      </div>
-      <div class="note" id="caesarStatNote"></div>
-
-      <p class="text-sm font-medium text-slate-900 mt-6 mb-2">ECC: byte values in 16 classes of 16 values (dashed line = uniform, 1/16)</p>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div><p class="text-xs text-slate-500 mb-1">Message bytes</p><div id="histBytesPlain"></div></div>
-        <div><p class="text-xs text-slate-500 mb-1">ECC ciphertext bytes</p><div id="histBytesEcc"></div></div>
-      </div>
-
-      <p class="text-sm font-medium text-slate-900 mt-6 mb-2">Chi-square test against uniform bytes</p>
-      <div class="overflow-x-auto"><table class="tbl" id="statChi"></table></div>
-      <div class="note" id="eccStatNote"></div>
-    </section>
-
-    <section id="attack-caesar" class="card">
-      <h2 class="h2">4. Statistical attack on Caesar</h2>
-      <p class="lead">
-        The Caesar ciphertext keeps the letter frequencies of the message, shifted by <i>k</i>. So the attacker decrypts
-        with all 26 keys and keeps the attempt that looks most like English. To measure this we
-        need the letter frequencies of the language, estimated from a long text (called a <b>corpus</b>).
-      </p>
-
-      <h3 class="h3">4a. The corpus</h3>
-      <p class="text-sm text-slate-600 leading-relaxed" id="corpusInfo"></p>
-      <div class="mt-3"><p class="text-xs text-slate-500 mb-1">Letter frequencies of English, estimated on the first half (dashed line = 1/26)</p><div id="histCorpus"></div></div>
-
-      <h3 class="h3">4b. Breaking one ciphertext</h3>
-      <p class="text-sm text-slate-600 leading-relaxed">
-        For every key the decrypted text gets a score. <b>χ²</b> compares its letter counts O<sub>i</sub> with the counts
-        expected in English E<sub>i</sub> = N·f<sub>i</sub>: χ² = Σ (O<sub>i</sub> − E<sub>i</sub>)² / E<sub>i</sub>, smaller
-        is better. Here χ² is a <b>score to rank 26 candidates</b>, not a hypothesis test: with a few letters E<sub>i</sub>
-        is far below 5 and the χ² distribution does not apply. The <b>bigram</b> score also uses the order of the letters:
-        it adds the log-probabilities of every pair of consecutive letters (TH, HE, IN, …), larger is better.
-      </p>
-      <div class="flex flex-wrap items-end gap-3 mt-4">
-        <label class="text-sm">Ciphertext<br><input id="breakText" class="field w-80 mono" value="WKLV LV D VHFUHW PHVVDJH"></label>
-        <button id="breakRun" class="btn">Break</button>
-        <button id="breakPart2" class="btn-2">Use the ciphertext of Part 2</button>
-        <button id="breakHello" class="btn-2">Try KHOOR ZRUOG</button>
-        <button id="breakNeverGonnaGive" class="btn-2">Try NEVER GONNA GIVE YOU UP! NEVER GONNA LET YOU DOWN!</button>
-      </div>
-      <div class="overflow-x-auto mt-4"><table class="tbl mono" id="breakTable"></table></div>
-      <div class="note" id="breakNote"></div>
-
-      <h3 class="h3">4c. How many letters are needed?</h3>
-      <p class="text-sm text-slate-600 leading-relaxed">
-        Monte Carlo simulation: for each length L, take a random piece of L letters from the <b>second half</b> of the
-        corpus (never used to estimate the frequencies), encrypt it with a random key, attack it, and count a success when
-        the decrypted text equals the original. Three methods: χ², bigrams, and the naive "the most frequent letter is E".
-      </p>
-      <div class="flex flex-wrap items-end gap-3 mt-4">
-        <label class="text-sm">Trials per length<br>
-          <select id="expTrials" class="field mt-1"><option>200</option><option selected>500</option><option>2000</option></select>
-        </label>
-        <button id="expRun" class="btn">Run experiment</button>
-      </div>
-      <svg id="expChart" viewBox="0 0 640 300" class="w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white"></svg>
-      <div class="overflow-x-auto mt-4"><table class="tbl" id="expTable"></table></div>
-      <div class="note">
-        <b>Results.</b> With 1 letter χ² always answers "E", so it succeeds about 12% of the time: the
-        frequency of E. χ² passes 90% at about 15–20 letters and is almost always right from 30: the longer the text,
-        the closer its frequencies get to the true ones. "Most frequent = E" throws away 25 letters
-        out of 26 and needs hundreds of letters; bigrams are right about 97% of the time already with 10. The ± is the
-        95% interval 1.96·√(p(1 − p)/T).<br><br>
-        <b>Limits.</b> Short texts, a different language from the corpus (Italian has few H and many
-        A, I, O), unusual texts (lists of names, a <a class="text-indigo-600 underline" href="https://en.wikipedia.org/wiki/Lipogram">lipogram</a> without E), and the attacker must know it is Caesar: a general
-        substitution or Vigenère needs other methods, still statistical.
-      </div>
-    </section>
-
-    <section id="attack-ecc" class="card">
-      <h2 class="h2">5. Brute-forcing the small ECC key</h2>
-      <p class="lead">
-        The attacker sees Bob's public key <i>Q</i> and the intercepted ciphertext (<i>R</i>, <i>c</i>) of Part 1b, and knows
-        (Kerckhoffs) that 1 ≤ <i>k</i> ≤ 2<sup>20</sup>. They try every key: 1·G = Q? 2·G = Q? … Instead of a full
-        multiplication per try, each candidate is the previous one plus <i>G</i>: (i + 1)G = iG + G, <b>one point addition
-        per key</b>. Once <i>k</i> is found, they decrypt exactly like Bob: S = kR, then XOR.
-      </p>
-      <div class="flex flex-wrap items-center gap-3 mt-4">
-        <button id="bfRun" class="btn">Start attack</button>
-        <button id="bfStop" class="btn-2">Stop</button>
-        <p class="text-xs">Private Key k changes only if the page is refreshed</p>
-      </div>
-      <div class="h-2 rounded-full bg-slate-200 mt-4 overflow-hidden"><div id="bfBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
-      <div class="overflow-x-auto mt-4"><table class="tbl mono" id="bfOut"></table></div>
-
-      <h3 class="h3">Why it fails on a real key</h3>
-      <p class="text-sm text-slate-600 leading-relaxed">
-        Every extra bit doubles the work. The times below use the speed measured on <b>this</b> computer by the attack
-        above (worst case: all the keys).
-      </p>
-      <div class="overflow-x-auto mt-3"><table class="tbl" id="bfScale"></table></div>
-      <div class="note">
-        On secp256k1 the key is uniform in [1, n − 1] with n ≈ 2<sup>256</sup>. The best known attack is not brute force
-        but <b>Pollard's rho</b>, about √n ≈ 2<sup>128</sup> point additions: this is why the
-        curve is said to give 128-bit security. The exception is a large quantum computer, where
-        <a class="text-indigo-600 underline" href="https://en.wikipedia.org/wiki/Shor%27s_algorithm"><b>Shor's algorithm</b></a> solves the ECDLP in polynomial time.
-      </div>
-
-      <h3 class="h3">The two attacks side by side</h3>
-      <div class="overflow-x-auto">
-        <table class="tbl">
-          <tr><th></th><th>Attack on Caesar</th><th>Attack on the toy ECC</th></tr>
-          <tr><td class="font-medium">What it exploits</td><td>the letter frequencies, which survive in the ciphertext</td><td>only the small number of keys</td></tr>
-          <tr><td class="font-medium">What it needs</td><td>a long enough ciphertext and a corpus of the right language</td><td>only the public key Q: no ciphertext, no language</td></tr>
-          <tr><td class="font-medium">Result</td><td>the <b>most likely</b> key (it can be wrong)</td><td>the key, <b>for certain</b>: kG = Q is checked exactly</td></tr>
-          <tr><td class="font-medium">What it gives</td><td>the key of that message</td><td>Bob's private key: every past and future message</td></tr>
-          <tr><td class="font-medium">Cost</td><td>26 tries (microseconds)</td><td>up to 2<sup>20</sup> point additions (seconds)</td></tr>
-          <tr><td class="font-medium">With more keys…</td><td>still broken: a general substitution has 26! ≈ 2<sup>88</sup> keys and falls to frequencies</td><td>impossible (table above)</td></tr>
-        </table>
-      </div>
-      <p class="note">
-        Caesar leaks statistical information: a weakness of the design, which no longer key
-        would fix. <br> The toy ECC leaks nothing statistically: it breaks only because the key space is
-        small, a weakness of the parameter. With a real 256-bit random key neither statistics nor brute force work.
-      </p>
-    </section>
-
-  </main>
+        <h3 class="h3">The two attacks side by side</h3>
+        <div class="overflow-x-auto">
+          <table class="tbl">
+            <tr>
+              <th></th>
+              <th>Attack on Caesar</th>
+              <th>Attack on the toy ECC</th>
+            </tr>
+            <tr>
+              <td class="font-medium">What it exploits</td>
+              <td>the letter frequencies, which survive in the ciphertext</td>
+              <td>only the small number of keys</td>
+            </tr>
+            <tr>
+              <td class="font-medium">What it needs</td>
+              <td>
+                a long enough ciphertext and a corpus of the right language
+              </td>
+              <td>only the public key Q: no ciphertext, no language</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Result</td>
+              <td>the <b>most likely</b> key (it can be wrong)</td>
+              <td>the key, <b>for certain</b>: kG = Q is checked exactly</td>
+            </tr>
+            <tr>
+              <td class="font-medium">What it gives</td>
+              <td>the key of that message</td>
+              <td>Bob's private key: every past and future message</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Cost</td>
+              <td>26 tries (microseconds)</td>
+              <td>up to 2<sup>20</sup> point additions (seconds)</td>
+            </tr>
+            <tr>
+              <td class="font-medium">With more keys…</td>
+              <td>
+                still broken: a general substitution has 26! ≈ 2<sup>88</sup>
+                keys and falls to frequencies
+              </td>
+              <td>impossible (table above)</td>
+            </tr>
+          </table>
+        </div>
+        <p class="note">
+          Caesar leaks statistical information: a weakness of the design, which
+          no longer key would fix. <br />
+          The toy ECC leaks nothing statistically: it breaks only because the
+          key space is small, a weakness of the parameter. With a real 256-bit
+          random key neither statistics nor brute force work.
+        </p>
+      </section>
+    </main>
     <script src="js/ui.js"></script>
     <script src="js/ecc.js"></script>
     <script src="js/corpus.js"></script>
     <script src="js/hw3.js"></script>
-</body>
+  </body>
 </html>

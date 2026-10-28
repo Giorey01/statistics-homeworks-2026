@@ -1,53 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Statistics · Homeworks</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Statistics · Homeworks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body
+    class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col"
+  >
+    <main class="max-w-4xl mx-auto px-4 py-16 flex-1">
+      <p class="text-sm font-medium text-indigo-600">
+        Statistics · MSc in Cybersecurity · Sapienza University of Rome
+      </p>
+      <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">
+        Homeworks 2026
+      </h1>
 
-  <main class="max-w-4xl mx-auto px-4 py-16 flex-1">
-    <p class="text-sm font-medium text-indigo-600">Statistics · MSc in Cybersecurity · Sapienza University of Rome</p>
-    <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">Homeworks 2026</h1>
+      <div class="grid md:grid-cols-2 gap-5 mt-10">
+        <a
+          href="hw1.html"
+          class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition"
+        >
+          <span
+            class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5"
+            >Homework 1</span
+          >
+          <h2 class="text-xl font-semibold text-slate-900 mt-3">
+            Private key → public key
+          </h2>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            Scalar multiplication on the toy curve y² = x³ + 7 (mod 17):
+            step-by-step computation, slow-motion animation, statistical
+            exploration of k → kG, and the difference between a one-way function
+            and a hash. Includes the research on cryptography and statistics in
+            blockchains.
+          </p>
+          <p
+            class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition"
+          >
+            Open →
+          </p>
+        </a>
 
-    <div class="grid md:grid-cols-2 gap-5 mt-10">
-      <a href="hw1.html" class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition">
-        <span class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5">Homework 1</span>
-        <h2 class="text-xl font-semibold text-slate-900 mt-3">Private key → public key</h2>
-        <p class="text-sm text-slate-600 mt-2 leading-relaxed">
-          Scalar multiplication on the toy curve y² = x³ + 7 (mod 17): step-by-step computation, slow-motion
-          animation, statistical exploration of k → kG, and the difference between a one-way function and a hash.
-          Includes the research on cryptography and statistics in blockchains.
-        </p>
-        <p class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition">Open →</p>
-      </a>
+        <a
+          href="hw2.html"
+          class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition"
+        >
+          <span
+            class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5"
+            >Homework 2</span
+          >
+          <h2 class="text-xl font-semibold text-slate-900 mt-3">
+            From wallet seed to Ethereum address
+          </h2>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            The pipeline mnemonic → seed → private key → public key → address,
+            computed live: BIP-39, BIP-32, BIP-44, secp256k1, Keccak-256 and
+            EIP-55, the distinctions between them, their history and their
+            statistical properties.
+          </p>
+          <p
+            class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition"
+          >
+            Open →
+          </p>
+        </a>
 
-      <a href="hw2.html" class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition">
-        <span class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5">Homework 2</span>
-        <h2 class="text-xl font-semibold text-slate-900 mt-3">From wallet seed to Ethereum address</h2>
-        <p class="text-sm text-slate-600 mt-2 leading-relaxed">
-          The pipeline mnemonic → seed → private key → public key → address, computed live: BIP-39, BIP-32, BIP-44,
-          secp256k1, Keccak-256 and EIP-55, the distinctions between them, their history and their statistical
-          properties.
-        </p>
-        <p class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition">Open →</p>
-      </a>
+        <a
+          href="hw3.html"
+          class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition"
+        >
+          <span
+            class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5"
+            >Homework 3</span
+          >
+          <h2 class="text-xl font-semibold text-slate-900 mt-3">
+            Encrypting with the curve, and breaking it
+          </h2>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            ElGamal-style encryption on secp256k1 with a small private key
+            versus the Caesar cipher: how each one encrypts, how many keys there
+            are, and how they break (letter frequencies against brute force).
+          </p>
+          <p
+            class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition"
+          >
+            Open →
+          </p>
+        </a>
 
-      <a href="hw3.html" class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition">
-        <span class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5">Homework 3</span>
-        <h2 class="text-xl font-semibold text-slate-900 mt-3">Encrypting with the curve, and breaking it</h2>
-        <p class="text-sm text-slate-600 mt-2 leading-relaxed">
-          ElGamal-style encryption on secp256k1 with a small private key versus the Caesar cipher: how each one
-          encrypts, how many keys there are, and how they break (letter frequencies against brute force).
-        </p>
-        <p class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition">Open →</p>
-      </a>
+        <a
+          href="hw4.html"
+          class="group bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:border-indigo-400 hover:shadow-md transition"
+        >
+          <span
+            class="inline-block rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-0.5"
+            >Homework 4</span
+          >
+          <h2 class="text-xl font-semibold text-slate-900 mt-3">
+            n systems, m attackers: penetration as a random walk
+          </h2>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            The penetration score as a sum of i.i.d. steps (Bernoulli and
+            Rademacher), simulated over many attackers: S<sub>n</sub>,
+            S<sub>n</sub>/n and S<sub>n</sub>/√n as n grows, the Law of Large
+            Numbers, the variance under each normalization, and the Central
+            Limit Theorem.
+          </p>
+          <p
+            class="text-sm font-medium text-indigo-600 mt-4 group-hover:translate-x-1 transition"
+          >
+            Open →
+          </p>
+        </a>
+      </div>
+    </main>
 
-    </div>
-  </main>
-
-  <footer class="max-w-4xl mx-auto px-4 pb-10 text-xs text-slate-400 w-full">Giorgio Paoloni · Student ID 1943153 · 2026</footer>
-</body>
+    <footer class="max-w-4xl mx-auto px-4 pb-10 text-xs text-slate-400 w-full">
+      Giorgio Paoloni · Student ID 1943153 · 2026
+    </footer>
+  </body>
 </html>
