@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homework 5 · Sampling mean and variance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+      @layer components {
+        .card {
+          @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8;
+        }
+        .h2 {
+          @apply text-2xl font-semibold tracking-tight text-slate-900;
+        }
+        .h3 {
+          @apply text-lg font-semibold text-slate-900 mt-8 mb-2;
+        }
+        .lead {
+          @apply text-slate-600 mt-2 leading-relaxed;
+        }
+        .btn {
+          @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition;
+        }
+        .btn-2 {
+          @apply inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition;
+        }
+        .field {
+          @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed;
+        }
+        .tbl {
+          @apply w-full text-sm text-left;
+        }
+        .tbl th {
+          @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50;
+        }
+        .tbl td {
+          @apply px-3 py-2 border-b border-slate-100 align-top;
+        }
+        .tile {
+          @apply rounded-xl bg-slate-50 border border-slate-200 p-4;
+        }
+        .note {
+          @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed;
+        }
+        .mono {
+          @apply font-mono text-[13px];
+        }
+        .chart {
+          @apply w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white;
+        }
+      }
+      .font-mono,
+      .mono {
+        font-variant-ligatures: none;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased">
+    <nav
+      class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm"
+      >
+        <a href="index.html" class="font-semibold text-slate-900"
+          >Statistics · Homeworks</a
+        >
+        <div class="hidden md:flex gap-5 text-slate-600">
+          <a href="#welford" class="hover:text-indigo-600">Welford</a>
+          <a href="#model" class="hover:text-indigo-600">Scores</a>
+          <a href="#running" class="hover:text-indigo-600">Running</a>
+          <a href="#averages" class="hover:text-indigo-600">Averages</a>
+          <a href="#spread" class="hover:text-indigo-600">Variability</a>
+          <a href="#inference" class="hover:text-indigo-600">Inference</a>
+          <a href="#conclusions" class="hover:text-indigo-600">Conclusions</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+      <header>
+        <p class="text-sm font-medium text-indigo-600">
+          Homework 5 · Welford's recurrences and sampling distributions
+        </p>
+        <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">
+          Sampling mean and variance of penetration scores
+        </h1>
+      </header>
+
+      <!-- ===================== Ex. 1 ===================== -->
+      <section id="welford" class="card">
+        <h2 class="h2">1. Welford's recurrence formulas</h2>
+        <p class="lead">
+          In intrusion detection systems and continuous monitoring, observations arrive sequentially: x<sub>1</sub>, x<sub>2</sub>, …. Storing past data for multi-pass calculations is impractical; running estimates of mean and variance update in O(1) time and space per observation.
+        </p>
+        <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+          For a stream of k values, we define:
+        </p>
+        <div class="tile mono mt-3 leading-7">
+          M<sub>k</sub> = (1/k) Σ<sub>i≤k</sub> x<sub>i</sub>
+          &nbsp;&nbsp;(sample mean after k observations)<br />
+          S<sub>k</sub> = Σ<sub>i≤k</sub> (x<sub>i</sub> − M<sub>k</sub>)²
+          &nbsp;&nbsp;(sum of squared deviations from M<sub>k</sub>)<br />
+          s²<sub>k</sub> = S<sub>k</sub>/(k − 1) &nbsp;(unbiased sample variance, k ≥ 2),
+          &nbsp;&nbsp; V<sub>k</sub> = S<sub>k</sub>/k &nbsp;(population variance)
+        </div>
+
+        <h3 class="h3">Knuth's recurrence for the mean</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Isolating the latest arrival x<sub>k</sub> from the accumulated sum:
+        </p>
+        <div class="tile mono mt-2 leading-7">
+          k·M<sub>k</sub> = x<sub>1</sub> + … + x<sub>k−1</sub> + x<sub>k</sub>
+          = (k − 1)·M<sub>k−1</sub> + x<sub>k</sub><br />
+          ⇒ M<sub>k</sub> = M<sub>k−1</sub> + (x<sub>k</sub> − M<sub>k−1</sub>)/k
+          &nbsp;&nbsp;&nbsp;(with initial conditions M<sub>0</sub> = 0, M<sub>1</sub> = x<sub>1</sub>)
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          The updated mean adjusts the previous estimate by a fraction 1/k of the deviation x<sub>k</sub> − M<sub>k−1</sub>. Rearranging this identity gives two expressions used in the variance derivation: k·(M<sub>k</sub> − M<sub>k−1</sub>) = x<sub>k</sub> − M<sub>k−1</sub> and (k − 1)·M<sub>k−1</sub> = k·M<sub>k</sub> − x<sub>k</sub>.
+        </p>
+
+        <h3 class="h3">Welford's recurrence for the sum of squares</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Expressing S<sub>k</sub> through algebraic expansion gives S<sub>k</sub> = Σ<sub>i≤k</sub> x<sub>i</sub>² − k·M<sub>k</sub>². The difference between successive steps k − 1 and k simplifies as:
+        </p>
+        <div class="tile mono mt-2 leading-8">
+          S<sub>k</sub> − S<sub>k−1</sub> = x<sub>k</sub>² − k·M<sub>k</sub>²
+          + (k − 1)·M<sub>k−1</sub>²
+          <span class="text-slate-400">(the sum of squares of the first k − 1 terms cancels out)</span
+          ><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;= x<sub>k</sub>² − k·M<sub>k</sub>² +
+          (k·M<sub>k</sub> − x<sub>k</sub>)·M<sub>k−1</sub>
+          <span class="text-slate-400">(substituting (k − 1)M<sub>k−1</sub> = kM<sub>k</sub> − x<sub>k</sub>)</span
+          ><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;= x<sub>k</sub>·(x<sub>k</sub> −
+          M<sub>k−1</sub>) − M<sub>k</sub>·k(M<sub>k</sub> − M<sub>k−1</sub>)
+          <span class="text-slate-400">(factoring by x<sub>k</sub> and M<sub>k</sub>)</span
+          ><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;= x<sub>k</sub>·(x<sub>k</sub> −
+          M<sub>k−1</sub>) − M<sub>k</sub>·(x<sub>k</sub> − M<sub>k−1</sub>)
+          <span class="text-slate-400">(applying Knuth: k(M<sub>k</sub> − M<sub>k−1</sub>) = x<sub>k</sub> − M<sub>k−1</sub>)</span
+          ><br />
+          <b
+            >⇒ S<sub>k</sub> = S<sub>k−1</sub> + (x<sub>k</sub> −
+            M<sub>k−1</sub>)·(x<sub>k</sub> − M<sub>k</sub>)</b
+          >
+          &nbsp;&nbsp;&nbsp;(S<sub>0</sub> = S<sub>1</sub> = 0)
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          The update step is the product of the distance of x<sub>k</sub> from the previous mean and from the new mean. Because x<sub>k</sub> − M<sub>k</sub> = ((k − 1)/k)(x<sub>k</sub> − M<sub>k−1</sub>), this step also equals ((k − 1)/k)(x<sub>k</sub> − M<sub>k−1</sub>)². Both factors share the same sign, so the increment is never negative and S<sub>k</sub> never decreases.
+        </p>
+
+        <h3 class="h3">Direct recurrence for the variance</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Dividing S<sub>k</sub> by k or k − 1 allows updating the variance directly, mirroring the structure of Knuth's mean formula:
+        </p>
+        <div class="tile mono mt-2 leading-8">
+          V<sub>k</sub> = V<sub>k−1</sub> + (d·e − V<sub>k−1</sub>) / k
+          &nbsp;&nbsp;(population variance)<br />
+          s²<sub>k</sub> = s²<sub>k−1</sub> + (d·e − s²<sub>k−1</sub>) / (k − 1)
+          &nbsp;&nbsp;(sample variance, k ≥ 2)
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          where d = x<sub>k</sub> − M<sub>k−1</sub> and e = x<sub>k</sub> − M<sub>k</sub>. The mean is a running average of incoming values; the variance is a running average of the cross-deviation products d·e.
+        </p>
+
+        <h3 class="h3">Implementation</h3>
+        <pre
+          class="tile mono overflow-x-auto leading-6"
+        >const w = { k: 0, mean: 0, ss: 0 };
+
+function welfordPush(w, x) {
+  w.k += 1;
+  <b>const d = x - w.mean;</b>
+  <b>w.mean += d / w.k;</b>
+  <b>w.ss += d * (x - w.mean);</b>
+}
+
+const sampleVariance = (w) => (w.k > 1 ? w.ss / (w.k - 1) : NaN);</pre>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          The variable <code>d</code> uses the old mean before updating <code>w.mean</code>, while <code>(x - w.mean)</code> uses the updated mean.
+        </p>
+
+        <h3 class="h3">Step by step</h3>
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="text-sm grow"
+            >Data (separated by spaces or commas)<br /><input
+              id="wData"
+              type="text"
+              class="field w-full mt-1 mono"
+              value="4, 7, 13, 16"
+          /></label>
+          <button id="wRun" class="btn">Compute</button>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="wTable"></table>
+        </div>
+        <div class="note" id="wNote"></div>
+
+        <h3 class="h3">Numerical stability vs. textbook formula</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          The standard algebraic formula s² = (Σx² − (Σx)²/n)/(n − 1) is exact on paper, but unstable under floating-point arithmetic. When data values are large relative to their variance, subtracting two large and nearly identical quantities cancels out leading digits, losing precision to catastrophic cancellation. Welford's algorithm accumulates deviations from the running mean at every step, keeping intermediate terms scaled to the variance.
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="stabTable"></table>
+        </div>
+        <div class="note">
+          When shifting the sample by c = 10<sup>9</sup>, individual squared terms exceed 10<sup>18</sup>, beyond the exact representation limit of 53-bit IEEE 754 doubles (≈ 9·10<sup>15</sup>). In this regime, the naive formula produces a negative variance. A two-pass algorithm avoids this issue by computing the mean first, but requires storing all observations. Welford achieves identical numerical stability in a single streaming pass with O(1) memory overhead.
+        </div>
+      </section>
+
+      <!-- ===================== Ex. 2 ===================== -->
+      <section id="model" class="card">
+        <h2 class="h2">2. Penetration model and score distribution</h2>
+        <p class="lead">
+          We model m independent attackers attempting to breach n systems. Each penetration attempt receives an integer score between 0 and 10 representing the number of breached defensive layers, drawn i.i.d. from a fixed distribution: <b>Binomial(10, 0.3)</b>. Across the trajectory of n attempts, Welford's algorithm tracks the sample mean x̄<sub>j</sub> and sample variance s²<sub>j</sub> for each attacker j.
+        </p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+          <div class="tile">
+            <span class="text-xs text-slate-500">Theoretical mean μ</span>
+            <p class="text-xl font-semibold text-slate-900 mt-1">3.0</p>
+            <span class="text-xs text-slate-400">10 · 0.3</span>
+          </div>
+          <div class="tile">
+            <span class="text-xs text-slate-500">Theoretical variance σ²</span>
+            <p class="text-xl font-semibold text-slate-900 mt-1">2.1</p>
+            <span class="text-xs text-slate-400">10 · 0.3 · 0.7</span>
+          </div>
+          <div class="tile">
+            <span class="text-xs text-slate-500">Standard deviation σ</span>
+            <p class="text-xl font-semibold text-slate-900 mt-1">≈ 1.4491</p>
+            <span class="text-xs text-slate-400">√2.1</span>
+          </div>
+          <div class="tile">
+            <span class="text-xs text-slate-500">Excess kurtosis κ</span>
+            <p class="text-xl font-semibold text-slate-900 mt-1">≈ −0.1238</p>
+            <span class="text-xs text-slate-400">(1 − 6pq) / (10pq)</span>
+          </div>
+        </div>
+
+        <svg id="distChart" viewBox="0 0 640 280" class="chart mt-6"></svg>
+        <p class="text-xs text-slate-500 mt-2">
+          Dark bars: theoretical Binomial(10, 0.3) probabilities; light blue bars: 20,000 empirical samples; red dashed line: true mean μ = 3.
+        </p>
+      </section>
+
+      <section id="running" class="card">
+        <h2 class="h2">3. Running mean and variance trajectories</h2>
+        <p class="lead">
+          Each attacker updates running estimates M<sub>k</sub> and s²<sub>k</sub> after each target k. Plotted on a log scale in k, early estimates swing widely, then settle into a theoretical band that contracts at rate 1/√k.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Systems n<br /><input
+              id="runN"
+              type="number"
+              class="field w-24"
+              value="1000"
+              min="2"
+          /></label>
+          <label class="text-sm"
+            >Attackers displayed<br /><input
+              id="runM"
+              type="number"
+              class="field w-20"
+              value="20"
+              min="1"
+          /></label>
+          <button id="runRun" class="btn">Simulate</button>
+        </div>
+        <p class="text-sm font-medium text-slate-900 mt-4">
+          Running mean M<sub>k</sub>
+        </p>
+        <svg id="runMean" viewBox="0 0 640 300" class="chart"></svg>
+        <p class="text-sm font-medium text-slate-900 mt-4">
+          Running sample variance s²<sub>k</sub>
+        </p>
+        <svg id="runVar" viewBox="0 0 640 300" class="chart"></svg>
+        <div class="note" id="runNote"></div>
+      </section>
+
+      <section id="averages" class="card">
+        <h2 class="h2">4. Ensemble averages of sample statistics</h2>
+        <p class="lead">
+          For a given sample size n, each of the m attackers computes x̄<sub>j</sub> and s²<sub>j</sub> from their own n attempts. Averaging these quantities across the entire ensemble verifies their theoretical expectations: E[x̄] = μ and E[s²] = σ² hold for any sample size n ≥ 2, establishing both as unbiased estimators. In contrast, normalizing the sum of squares by n yields E[S/n] = ((n − 1)/n)·σ², which underestimates the variance by Bessel's correction factor.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Attackers m<br />
+            <select id="expM" class="field mt-1">
+              <option>100</option>
+              <option>1000</option>
+              <option selected>5000</option>
+              <option>20000</option>
+            </select>
+          </label>
+          <button id="expRun" class="btn">Run</button>
+          <p class="text-xs text-slate-500 pb-2">n = 2, 5, 10, 30, 100, 1000</p>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="expTable"></table>
+        </div>
+        <div class="note" id="expNote"></div>
+      </section>
+
+      <section id="spread" class="card">
+        <h2 class="h2">5. Sampling variability and sample size</h2>
+        <p class="lead">
+          While ensemble averages align with the true parameters, estimates from any single attacker disperse around μ and σ². For i.i.d. observations, the theoretical sampling variances are:
+        </p>
+        <div class="tile mono mt-3 leading-7">
+          Var(x̄) = σ²/n &nbsp;&nbsp;&nbsp;(standard error: σ/√n)<br />
+          Var(s²) = (μ₄ − σ⁴·(n − 3)/(n − 1))/n = σ⁴·(2/(n − 1) + κ/n)
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="spreadTable"></table>
+        </div>
+        <svg id="spreadChart" viewBox="0 0 640 300" class="chart"></svg>
+        <div class="note" id="spreadChartNote"></div>
+
+        <p class="text-sm font-medium text-slate-900 mt-6 mb-2">
+          Histograms of sample means x̄<sub>j</sub> across m attackers (red: true μ)
+        </p>
+        <div
+          class="grid grid-cols-2 md:grid-cols-6 gap-3"
+          id="histMeans"
+        ></div>
+        <p class="text-sm font-medium text-slate-900 mt-4 mb-2">
+          Histograms of sample variances s²<sub>j</sub> across m attackers (red: true σ²)
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3" id="histVars"></div>
+        <div class="note" id="spreadNote"></div>
+      </section>
+
+      <section id="inference" class="card">
+        <h2 class="h2">6. Inferential confidence from a single sample</h2>
+        <p class="lead">
+          In real settings, μ and σ² are unknown and must be estimated from a single sample of size n. With estimated standard error s/√n, nominal 95% confidence intervals are x̄ ± 1.96·s/√n for normal approximations, or x̄ ± t<sub>0.975, n−1</sub>·s/√n for small samples. Running this across m attackers tests how often these intervals actually contain μ.
+        </p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="covTable"></table>
+        </div>
+        <div class="note" id="covNote"></div>
+      </section>
+
+      <section id="conclusions" class="card">
+        <h2 class="h2">7. Conclusions</h2>
+        <h3 class="h3">Empirical results</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Across all tested sample sizes, the ensemble average of sample means converges to μ = 3 within simulation error (|z| ≤ 2). This unbiasedness depends solely on the linearity of expectation, without requiring asymptotic sample sizes or normality.
+        </p>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          The average sample variance matches σ² = 2.1 when divided by n − 1. Dividing by n underestimates variance by a factor of (n − 1)/n: a 50% deficit at n = 2, 10% at n = 10, and negligible differences past n = 100.
+        </p>
+
+        <h3 class="h3">Sampling distributions and convergence</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          An unbiased estimator can still be noisy for a single attacker. Larger n keeps the centers at μ = 3 and σ² = 2.1 while shrinking estimator variance: Var(x̄) scales as σ²/n, and Var(s²) scales asymptotically as 1/n.
+        </p>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          Estimating variance requires more data than estimating the mean because Var(s²) depends on the fourth moment μ₄. For Binomial(10, 0.3), excess kurtosis is small (κ ≈ −0.124), so estimates do not suffer from heavy-tail spikes, though distributions at n = 2 and n = 5 remain right-skewed.
+        </p>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          For confidence intervals, replacing the Gaussian critical value 1.96 with Student's t quantiles widens intervals at small n to account for variability in s. As sample size grows, coverage approaches the nominal 95% rate in accordance with the central limit theorem.
+        </p>
+
+        <h3 class="h3">Application to cybersecurity metrics</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Ranking penetration testers or defenses on small samples (such as n = 5) mostly measures luck. Telling skill levels apart requires an n large enough that the standard error s/√n is smaller than the gap between testers.
+        </p>
+        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+          In monitoring pipelines, Welford's recurrence updates baselines and alert thresholds in O(1) space per stream without retaining raw logs.
+        </p>
+
+        <h3 class="h3">Model assumptions</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          These formulas assume independent, identically distributed trials. If attempts correlate through attacker learning, automated scripts, or shared credentials, Var(x̄) exceeds σ²/n and s/√n underestimates uncertainty. If target systems vary in difficulty, μ and σ² describe the mixed pool of systems, not any single host.
+        </p>
+      </section>
+    </main>
+    <script src="js/ui.js"></script>
+    <script src="js/hw5.js"></script>
+  </body>
+</html>
