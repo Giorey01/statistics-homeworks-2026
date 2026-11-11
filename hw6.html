@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homework 6 · Riemann, Lebesgue and the normal CDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+      @layer components {
+        .card {
+          @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8;
+        }
+        .h2 {
+          @apply text-2xl font-semibold tracking-tight text-slate-900;
+        }
+        .h3 {
+          @apply text-lg font-semibold text-slate-900 mt-8 mb-2;
+        }
+        .lead {
+          @apply text-slate-600 mt-2 leading-relaxed;
+        }
+        .txt {
+          @apply text-sm text-slate-600 leading-relaxed mt-2;
+        }
+        .btn {
+          @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition disabled:opacity-50;
+        }
+        .field {
+          @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500;
+        }
+        .tbl {
+          @apply w-full text-sm text-left;
+        }
+        .tbl th {
+          @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50;
+        }
+        .tbl td {
+          @apply px-3 py-2 border-b border-slate-100 align-top;
+        }
+        .tile {
+          @apply rounded-xl bg-slate-50 border border-slate-200 p-4;
+        }
+        .note {
+          @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed;
+        }
+        .mono {
+          @apply font-mono text-[13px];
+        }
+        .chart {
+          @apply w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white;
+        }
+        .lnk {
+          @apply text-indigo-600 underline;
+        }
+      }
+      .font-mono,
+      .mono {
+        font-variant-ligatures: none;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased">
+    <nav
+      class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm"
+      >
+        <a href="index.html" class="font-semibold text-slate-900"
+          >Statistics · Homeworks</a
+        >
+        <div class="hidden md:flex gap-5 text-slate-600">
+          <a href="#definitions" class="hover:text-indigo-600">Definitions</a>
+          <a href="#results" class="hover:text-indigo-600">Results</a>
+          <a href="#convergence" class="hover:text-indigo-600">Convergence</a>
+          <a href="#pathological" class="hover:text-indigo-600">Pathological</a>
+          <a href="#normal" class="hover:text-indigo-600">Normal CDF</a>
+          <a href="#liouville" class="hover:text-indigo-600">Liouville</a>
+          <a href="#methods" class="hover:text-indigo-600">Methods</a>
+          <a href="#accuracy" class="hover:text-indigo-600">Accuracy</a>
+          <a href="#conclusions" class="hover:text-indigo-600">Conclusions</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+      <header>
+        <p class="text-sm font-medium text-indigo-600">
+          Homework 6 · Integration theory and special functions
+        </p>
+        <h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-1">
+          Riemann vs. Lebesgue, and the normal CDF
+        </h1>
+      </header>
+
+      <!-- ===================== Ex. 1 · definitions ===================== -->
+      <section id="definitions" class="card">
+        <h2 class="h2">1. Two ways to cut an area</h2>
+        <p class="lead">
+          Riemann partitions the <b>domain</b>: vertical strips, each as high
+          as a value of f. Lebesgue partitions the <b>range</b>: horizontal
+          slabs, each as wide as the set of points where f exceeds that level.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-6">
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">Riemann sum</p>
+            <p class="mono mt-2 leading-7">
+              S<sub>n</sub> = Σ<sub>i</sub> f(ξ<sub>i</sub>)·(x<sub>i</sub> −
+              x<sub>i−1</sub>)
+            </p>
+            <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+              Partition a = x<sub>0</sub> &lt; … &lt; x<sub>n</sub> = b, one
+              tag ξ<sub>i</sub> per cell. Using the inf (sup) of f on each cell
+              gives the lower (upper) Darboux sum L ≤ S<sub>n</sub> ≤ U. f is
+              Riemann-integrable when U − L → 0.
+            </p>
+          </div>
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">Lebesgue sum</p>
+            <p class="mono mt-2 leading-7">
+              Σ<sub>k</sub> y<sub>k</sub>·μ({x : y<sub>k</sub> ≤ f(x) &lt;
+              y<sub>k+1</sub>})
+            </p>
+            <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+              Levels y<sub>0</sub> &lt; … &lt; y<sub>M</sub>, μ = Lebesgue
+              measure (length). This is the integral of a simple function
+              below f; its error is at most Δy·μ(domain). Equivalently, the
+              layer-cake formula below.
+            </p>
+          </div>
+        </div>
+
+        <div class="tile mono mt-4 leading-8">
+          ∫ f dμ = y<sub>0</sub>·(b − a) + ∫<sub>y<sub>0</sub></sub
+          ><sup>y<sub>1</sub></sup> μ({x : f(x) &gt; t}) dt
+          <span class="text-slate-400"
+            >&nbsp;&nbsp;(layer cake: integrate in the height t the measure of
+            the set above t)</span
+          >
+        </div>
+
+        <h3 class="h3">When does each one work?</h3>
+        <p class="txt">
+          <b>Lebesgue's criterion:</b> a function on [a, b] is
+          Riemann-integrable if and only if it is <b>bounded</b> and its set of
+          discontinuities has <b>measure zero</b>. Every Riemann-integrable
+          function is also Lebesgue-integrable and gives the exact same value,
+          so on all standard, well-behaved functions the two approaches always
+          agree. The converse is not true: Lebesgue can integrate functions
+          that are discontinuous everywhere (like the Dirichlet function)
+          because sets of measure zero simply do not contribute to the integral.
+          It also handles unbounded functions like 1/√x without needing a separate
+          theory of improper integrals. In probability theory, Lebesgue
+          integration is essential because it allows swapping limits and
+          integrals under dominated convergence, which is why expectations E[X]
+          are defined as Lebesgue integrals.
+        </p>
+
+        <h3 class="h3">From definition to algorithm</h3>
+        <p class="txt">
+          Computing a Riemann sum on a computer is straightforward: I sample f
+          at n points and sum the rectangles. A Lebesgue sum is harder to compute
+          directly because I need the measure of the preimage {x : f(x) &gt; t}.
+          Here I test two numerical approaches:
+        </p>
+        <ul class="list-disc pl-5 text-sm text-slate-600 leading-relaxed mt-2 space-y-1">
+          <li>
+            <b>Lebesgue (exact pre-images)</b>: I split [a, b] at points where
+            f changes direction or has jumps. On each monotone piece, {f &gt; t}
+            is just an interval, and I find its boundary using bisection. I then
+            approximate the integral over the range using M levels. Lower and
+            upper Darboux–Lebesgue sums give a guaranteed bracket for the true
+            value.
+          </li>
+          <li>
+            <b>Lebesgue (sampled pre-images)</b>: I sample f at N points, sort
+            the values into M bins, and count how many points fall into each bin.
+            This works for any function without knowing its structure, but since
+            it relies on an x-grid, it is essentially a Riemann sum in disguise.
+          </li>
+        </ul>
+
+        <h3 class="h3">Interactive visualization</h3>
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="text-sm"
+            >Function<br /><select id="picF" class="field mt-1"></select
+          ></label>
+          <label class="text-sm"
+            >Cells n = levels M:
+            <b id="picNLabel">8</b><br /><input
+              id="picN"
+              type="range"
+              min="2"
+              max="40"
+              value="8"
+              class="w-48 mt-3"
+          /></label>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <svg id="picRiemann" viewBox="0 0 400 260" class="chart"></svg>
+            <p class="text-xs text-slate-500 mt-1" id="picRiemannNote"></p>
+          </div>
+          <div>
+            <svg id="picLebesgue" viewBox="0 0 400 260" class="chart"></svg>
+            <p class="text-xs text-slate-500 mt-1" id="picLebesgueNote"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Ex. 1 · results ===================== -->
+      <section id="results" class="card">
+        <h2 class="h2">2. The test functions</h2>
+        <p class="lead">
+          All methods at the same resolution n = M = 1000. Each cell shows the
+          estimate and, below it, the absolute error against the exact value.
+          The green cells are within 10<sup>−6</sup> of the exact value.
+        </p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="resTable"></table>
+        </div>
+        <div class="note" id="resNote"></div>
+        <h3 class="h3">Function by function</h3>
+        <div class="overflow-x-auto">
+          <table class="tbl text-sm">
+            <tr>
+              <th>f</th>
+              <th>Pre-image {f &gt; t}</th>
+              <th>What happens</th>
+            </tr>
+            <tr>
+              <td>sin x</td>
+              <td class="mono">[arcsin t, π − arcsin t]</td>
+              <td>
+                Smooth: Simpson wins easily. The measure π − 2 arcsin t has a
+                square-root singularity at the maximum t = 1 (f is flat
+                there), so Lebesgue converges only as M<sup>−1.5</sup>.
+              </td>
+            </tr>
+            <tr>
+              <td>x²</td>
+              <td class="mono">(√t, 1], measure 1 − √t</td>
+              <td>
+                Simpson is exact (it integrates cubics exactly). Lebesgue has a
+                √t singularity at t = 0 (the flat minimum) → M<sup>−1.5</sup>.
+              </td>
+            </tr>
+            <tr>
+              <td>step 1 / 3</td>
+              <td class="mono">[0, 1] or [½, 1]</td>
+              <td>
+                Only two values, so Lebesgue is exact. Left and midpoint sums
+                are exact as well, because ½ is a cell boundary for even n.
+                Trapezoid and Simpson evaluate f on the jump node itself, and
+                their error becomes O(h).
+              </td>
+            </tr>
+            <tr>
+              <td>|x − ½|</td>
+              <td class="mono">[0, ½ − t) ∪ (½ + t, 1]</td>
+              <td>
+                Pre-image in two pieces. Piecewise linear with the kink on a
+                node: midpoint, trapezoid and Lebesgue are all exact (μ is
+                linear in t).
+              </td>
+            </tr>
+            <tr>
+              <td>1/√x</td>
+              <td class="mono">(0, 1] if t ≤ 1, (0, 1/t²) if t &gt; 1</td>
+              <td>
+                <b>Unbounded</b>: left sums, trapezoid and Simpson need f(0) =
+                ∞ and fail. Midpoint converges slowly, O(n<sup>−1/2</sup>), because
+                the first cell alone holds 2√h of area. Lebesgue integrates it
+                naturally (∫ = 1 + ∫<sub>1</sub><sup>∞</sup> t<sup>−2</sup> dt
+                = 2) but in practice must truncate at a height T: the error is
+                the missing tail 1/T.
+              </td>
+            </tr>
+            <tr>
+              <td>indicator x &lt; ½</td>
+              <td class="mono">[0, ½)</td>
+              <td>∫ 1<sub>A</sub> = μ(A) is the Lebesgue definition itself.</td>
+            </tr>
+            <tr>
+              <td>sin x / x</td>
+              <td class="mono">[0, x(t)), x(t) by bisection</td>
+              <td>
+                0/0 at x = 0: f(0) = 1 must be set by hand (the limit), or the
+                code produces NaN. The antiderivative Si(x) is not elementary,
+                which links this case to Exercise 2.
+              </td>
+            </tr>
+            <tr>
+              <td>√x <span class="text-slate-400">(added)</span></td>
+              <td class="mono">(t², 1], measure 1 − t²</td>
+              <td>
+                The vertical derivative at x = 0 degrades midpoint and Simpson
+                convergence to O(n<sup>−1.5</sup>). The level-set measure μ({√x
+                &gt; t}) = 1 − t² is polynomial, allowing Lebesgue integration
+                to maintain O(M<sup>−2</sup>).
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== Ex. 1 · convergence ===================== -->
+      <section id="convergence" class="card">
+        <h2 class="h2">3. Convergence and computational cost</h2>
+        <p class="lead">
+          Error against resolution on a log-log scale: a power law
+          C·n<sup>−p</sup> is a straight line with slope −p, the order of the
+          method. Riemann rules use n cells. Lebesgue uses M levels.
+        </p>
+        <div class="flex flex-wrap items-end gap-3 mt-4">
+          <label class="text-sm"
+            >Function<br /><select id="convF" class="field mt-1"></select
+          ></label>
+          <button id="convRun" class="btn">Run</button>
+        </div>
+        <svg id="convChart" viewBox="0 0 640 320" class="chart"></svg>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="convTable"></table>
+        </div>
+        <div class="note" id="convNote"></div>
+      </section>
+
+      <!-- ===================== Ex. 1 · pathological ===================== -->
+      <section id="pathological" class="card">
+        <h2 class="h2">4. Pathological functions: where the two disagree</h2>
+
+        <h3 class="h3 mt-4">4.1 Dirichlet: 1 on the rationals, 0 elsewhere</h3>
+        <p class="txt">
+          <b>Riemann.</b> Every cell of every partition contains both
+          rationals and irrationals, so inf f = 0 and sup f = 1 on each cell:
+          L = 0 and U = 1 for <i>every</i> partition. A Riemann sum takes any
+          value between 0 and 1 depending on the tags (all rational → 1, all
+          irrational → 0). It does not converge, so f is not Riemann-integrable
+          (it is discontinuous everywhere, a set of measure 1).
+        </p>
+        <p class="txt">
+          <b>Lebesgue.</b> ℚ ∩ [0, 1] is countable. Cover its k-th element by
+          an interval of length ε/2<sup>k+1</sup>: the total length is below ε,
+          and ε is arbitrary, so μ(ℚ) = 0. With the two levels 0 and 1:
+          ∫ f = 1·μ(ℚ) + 0·μ([0, 1] \ ℚ) = <b>0</b>. The table builds this
+          cover explicitly for all rationals with denominator ≤ Q.
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="coverTable"></table>
+        </div>
+        <p class="txt">
+          <b>Why this cannot be tested directly on a computer.</b> Every IEEE-754
+          double-precision float is stored as a fraction m / 2<sup>k</sup>,
+          meaning it is always rational. A literal <code>isRational(x)</code>
+          check would return true for every floating-point number, giving an
+          incorrect sum of 1. The table below shows the exact fractions stored
+          by the machine for familiar numbers:
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="fracTable"></table>
+        </div>
+        <div class="note">
+          To test Dirichlet, I track rationality symbolically: a tag
+          is rational when constructed as a fraction (like the midpoints (2i +
+          1)/(2n)), and irrational when shifted by an irrational offset (like
+          rational + √2·h). From a probabilistic point of view, picking a random
+          number in [0, 1] hits a rational with probability μ(ℚ) = 0, so Monte
+          Carlo simulation gives 0.
+        </div>
+
+        <h3 class="h3">4.2 Thomae: f(p/q) = 1/q, f(irrational) = 0</h3>
+        <p class="txt">
+          Thomae's function is continuous at every irrational and discontinuous
+          at every rational. Because the rationals have measure zero, it is
+          Riemann-integrable and both methods give 0. However, the way Riemann
+          sums converge to 0 depends on the arithmetic of n. Using grid tags
+          i/N, f(i/N) = gcd(i, N)/N (computed with exact integers).
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="thomaeTable"></table>
+        </div>
+        <svg id="thomaeChart" viewBox="0 0 640 280" class="chart"></svg>
+        <p class="text-xs text-slate-500 mt-1">
+          Riemann sums with tags i/N for N = 1 … 600. Primes sit on the lower
+          envelope (≈ 2/N, where every tag yields 1/N except f(0) = 1). Highly
+          composite values of N form upper spikes.
+        </p>
+        <p class="txt">
+          <b>Lebesgue.</b> For any threshold t &gt; 0, {f &gt; t} = {p/q : q
+          &lt; 1/t} is a finite set, with measure 0. Every term of the
+          Lebesgue sum vanishes, giving an exact value of 0 for any number of
+          levels M.
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="thomaeLevelTable"></table>
+        </div>
+
+        <h3 class="h3">4.3 A fat Cantor set: an indicator Riemann cannot integrate</h3>
+        <p class="txt">
+          While Dirichlet cannot be simulated directly with floats, the
+          Smith–Volterra–Cantor set C can be built algorithmically. I start
+          with [0, 1] and at each step k remove an open interval of length
+          1/4<sup>k</sup> from the middle of each remaining piece. The total
+          length removed is Σ 2<sup>k−1</sup>/4<sup>k</sup> = ½, so the
+          remaining set has measure <b>μ(C) = ½</b>, even though it contains
+          no intervals at all (it is nowhere dense). For the indicator function
+          1<sub>C</sub>:
+        </p>
+        <ul class="list-disc pl-5 text-sm text-slate-600 leading-relaxed mt-2 space-y-1">
+          <li>
+            every cell contains a removed gap → inf = 0 → <b>L = 0</b>;
+          </li>
+          <li>
+            the upper sum counts the cells that meet C. Because C is closed,
+            <b>U → μ(C) = ½</b>;
+          </li>
+          <li>
+            U − L → ½ ≠ 0: <b>not Riemann-integrable</b> (discontinuous on all
+            of C, a set of measure ½);
+          </li>
+          <li>Lebesgue: ∫ 1<sub>C</sub> = μ(C) = <b>½</b>, directly.</li>
+        </ul>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="svcTable"></table>
+        </div>
+        <div class="note" id="svcNote"></div>
+      </section>
+
+      <!-- ===================== Ex. 2 · normal CDF ===================== -->
+      <section id="normal" class="card">
+        <h2 class="h2">5. The normal CDF and the error function</h2>
+        <p class="lead">
+          For Z ~ N(0, 1) (Hogg, McKean, Craig, §3.4):
+        </p>
+        <div class="tile mono mt-3 leading-8">
+          φ(t) = e<sup>−t²/2</sup> / √(2π), &nbsp;&nbsp;&nbsp; Φ(x) = P(Z ≤ x)
+          = ∫<sub>−∞</sub><sup>x</sup> φ(t) dt, &nbsp;&nbsp;&nbsp; P(X ≤ x) =
+          Φ((x − μ)/σ) for X ~ N(μ, σ²)
+        </div>
+        <p class="txt">
+          The <b>definite</b> integral over the whole line can be computed
+          exactly. Squaring it and switching to polar coordinates, I² = ∫∫
+          e<sup>−(x²+y²)/2</sup> dx dy = ∫<sub>0</sub><sup>2π</sup>∫<sub>0</sub
+          ><sup>∞</sup> e<sup>−r²/2</sup> r dr dθ = 2π, so ∫φ = 1. The
+          <b>antiderivative</b>, however, cannot be written in elementary terms
+          (§6). Symmetry gives Φ(0) = ½ and Φ(−x) = 1 − Φ(x).
+        </p>
+        <h3 class="h3">The error function</h3>
+        <div class="tile mono leading-8">
+          erf(z) = (2/√π) ∫<sub>0</sub><sup>z</sup> e<sup>−s²</sup> ds,
+          &nbsp;&nbsp; erfc(z) = 1 − erf(z)<br />
+          <b
+            >Φ(x) = ½·(1 + erf(x/√2)) = ½·erfc(−x/√2)</b
+          >
+        </div>
+        <p class="txt">
+          Proof: Φ(x) = ½ + ∫<sub>0</sub><sup>x</sup> φ(t) dt. Substituting t =
+          s√2 (dt = √2 ds) gives ∫<sub>0</sub><sup>x</sup> φ =
+          (1/√π)∫<sub>0</sub><sup>x/√2</sup> e<sup>−s²</sup> ds = ½·erf(x/√2).
+          This gives an exact analytical relationship. However, erf is just a
+          standard name given to this integral (like sin and exp are names for
+          other functions); writing erf(x) does not compute its value directly.
+        </p>
+      </section>
+
+      <!-- ===================== Ex. 2 · Liouville ===================== -->
+      <section id="liouville" class="card">
+        <h2 class="h2">6. Why Φ is not elementary: Liouville's theorem</h2>
+        <p class="lead">
+          Elementary functions are those built from rational functions, exp
+          and log (hence roots, trigonometric functions and their inverses)
+          through finitely many arithmetic operations and compositions.
+        </p>
+        <div class="tile mt-4">
+          <p class="text-sm font-semibold text-slate-900">
+            Theorem (Liouville, 1835, special case)
+          </p>
+          <p class="text-sm text-slate-700 mt-2 leading-relaxed">
+            Let f, g be rational functions, g non-constant. Then ∫ f(x)
+            e<sup>g(x)</sup> dx is elementary <b>if and only if</b> there is a
+            rational function R with
+            <span class="mono">f = R′ + R·g′</span>. In that case, the
+            antiderivative is R(x)·e<sup>g(x)</sup>.
+          </p>
+        </div>
+        <p class="txt">
+          For e<sup>−x²</sup>: f = 1, g = −x², g′ = −2x. An elementary
+          antiderivative would need a rational R with
+        </p>
+        <div class="tile mono mt-2">R′(x) − 2x·R(x) = 1.</div>
+        <ul class="list-disc pl-5 text-sm text-slate-600 leading-relaxed mt-3 space-y-1">
+          <li>
+            <b>R a polynomial</b> of degree d ≥ 0: −2xR has degree d + 1 while
+            R′ has degree d − 1, so the left side has degree d + 1 ≥ 1 and
+            cannot equal the constant 1. (R = 0 gives 0 ≠ 1.)
+          </li>
+          <li>
+            <b>R with a pole</b> of order k ≥ 1 at some point a: R′ has a pole
+            of order k + 1 there, −2xR at most of order k, so the left side
+            still has a pole at a, while 1 has none.
+          </li>
+        </ul>
+        <p class="txt">
+          No such R exists, so ∫ e<sup>−x²</sup> dx is not elementary, and
+          neither is Φ (it is the same integral rescaled). The same argument
+          shows that Si(x) = ∫ sin x / x and Ei(x) = ∫ eˣ / x are not
+          elementary either. The general theory is the Risch algorithm (1969),
+          in Rosenlicht's algebraic formulation (1972).
+        </p>
+        <div class="note">
+          Saying that Φ is not an elementary function does not mean it does not
+          exist or that it cannot be computed. Because the normal density φ is
+          continuous, Φ is well-defined everywhere and can be approximated to
+          any precision needed. It simply means there is no finite closed
+          formula built from standard operations.
+        </div>
+      </section>
+
+      <!-- ===================== Ex. 2 · methods ===================== -->
+      <section id="methods" class="card">
+        <h2 class="h2">7. Why numerical methods are still needed, and which ones</h2>
+        <p class="lead">
+          Writing Φ(x) in terms of erf(x/√2) gives an exact formula on paper,
+          but erf still has to be computed numerically. Even standard functions
+          like <code>Math.exp</code> and <code>Math.sin</code> are computed
+          using polynomial or rational approximations in the math library,
+          since the processor only does +, −, ×, ÷, and √. JavaScript does not
+          even have a built-in <code>Math.erf</code>, so I had to implement
+          Φ myself. A good implementation needs three things: high precision
+          (~10<sup>−16</sup>) across the whole line, accurate relative error in
+          the tails (where values like 10<sup>−10</sup> need correct digits),
+          and fast evaluation.
+        </p>
+
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl text-sm">
+            <tr>
+              <th>Method</th>
+              <th>Formula</th>
+              <th>Strengths / weaknesses</th>
+            </tr>
+            <tr>
+              <td>Simpson</td>
+              <td class="mono">Φ(x) = ½ + ∫<sub>0</sub><sup>x</sup> φ, n = 64</td>
+              <td>
+                Error O(h⁴) on a smooth integrand. Computes ½ − (almost ½) in
+                the tail, so all relative accuracy is lost there.
+              </td>
+            </tr>
+            <tr>
+              <td>Taylor series of erf</td>
+              <td class="mono">
+                erf z = (2/√π) Σ (−1)ⁿ z<sup>2n+1</sup> / (n!(2n+1))
+              </td>
+              <td>
+                Converges for every z, but the alternating terms grow to about
+                e<sup>z²</sup> before cancelling. Accurate for |x| ≲ 3.
+              </td>
+            </tr>
+            <tr>
+              <td>Positive series (A&amp;S 7.1.6)</td>
+              <td class="mono">
+                Φ(x) = ½ + φ(x)·(x + x³/3 + x⁵/(3·5) + …)
+              </td>
+              <td>
+                All terms share one sign, so the sum has no cancellation (this
+                is Marsaglia's 2004 method). Still ½ − (almost ½) in the left
+                tail.
+              </td>
+            </tr>
+            <tr>
+              <td>Asymptotic expansion</td>
+              <td class="mono">
+                Φ(−a) ≈ φ(a)/a·(1 − 1/a² + 3/a⁴ − 15/a⁶ + …)
+              </td>
+              <td>
+                Divergent, but truncated at its smallest term it is excellent
+                for a ≳ 6. The first term gives the Mills-ratio bound. Useless
+                near 0.
+              </td>
+            </tr>
+            <tr>
+              <td>Continued fraction (Laplace)</td>
+              <td class="mono">Φ(−a) = φ(a) / (a + 1/(a + 2/(a + 3/(a + …))))</td>
+              <td>
+                Converges for every a &gt; 0, quickly for large a. Computes the
+                small tail <i>directly</i>.
+              </td>
+            </tr>
+            <tr>
+              <td>A&amp;S 26.2.17 / 7.1.26</td>
+              <td class="mono">
+                Φ(−a) ≈ φ(a)·P₅(t), t = 1/(1 + 0.2316419a)
+              </td>
+              <td>
+                Rational approximations with 5 fixed coefficients and one exp.
+                Very fast, with absolute error &lt; 7.5·10⁻⁸ (1.5·10⁻⁷ for
+                7.1.26), but relative error in the tail is poor.
+              </td>
+            </tr>
+            <tr>
+              <td><b>Hybrid (mine)</b></td>
+              <td class="mono">
+                a = |x|: a &lt; 1.4 → series; a ≥ 1.4 → continued fraction
+              </td>
+              <td>
+                Computes the small tail Q = Φ(−a) directly, then sets Φ(x) = Q
+                for x ≤ 0 and 1 − Q for x &gt; 0. Like Cody's 1969 SPECFUN
+                algorithms, this switches approximations across intervals to
+                preserve relative precision.
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <h3 class="h3">My implementation</h3>
+        <pre class="tile mono overflow-x-auto leading-6">const phi = (x) => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+
+function tail(a) {                       // Q(a) = Φ(−a) = 1 − Φ(a), a ≥ 0
+  if (a &lt; 1.4) {                         // positive series
+    let term = a, sum = a;
+    for (let k = 3; term &gt; 1e-17 * sum; k += 2) sum += (term *= a * a / k);
+    return 0.5 - phi(a) * sum;
+  }
+  let d = a;                             // continued fraction, bottom-up
+  for (let k = Math.ceil(15 + 500 / (a * a)); k &gt;= 1; k--) d = a + k / d;
+  return phi(a) / d;
+}
+
+const Phi = (x) => (x &lt;= 0 ? tail(-x) : 1 - tail(x));</pre>
+
+        <h3 class="h3">The tail trap: catastrophic cancellation</h3>
+        <p class="txt">
+          Evaluating the upper tail as 1 − Φ(x) subtracts two numbers close
+          to 1, inducing catastrophic cancellation. In IEEE-754 double
+          precision, Φ(x) rounds to 1 for x ≳ 8.3, entirely erasing significant
+          tail digits. Applying Gaussian symmetry resolves the issue: P(Z &gt;
+          x) = Φ(−x) computes the small tail directly.
+        </p>
+        <div class="overflow-x-auto mt-3">
+          <table class="tbl mono" id="trapTable"></table>
+        </div>
+      </section>
+
+      <!-- ===================== Ex. 2 · accuracy and efficiency ===================== -->
+      <section id="accuracy" class="card">
+        <h2 class="h2">8. Accuracy and efficiency</h2>
+        <p class="lead">
+          Reference values: Φ(x) computed with 120 significant digits (Python
+          <code>decimal</code>, positive series), rounded to the nearest
+          double. Each one can be checked against Wolfram Alpha with the link
+          in the first column.
+        </p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="accTable"></table>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">
+          Cells show the relative error |Φ̂ − Φ|/Φ. Green: &lt; 10<sup>−14</sup>;
+          amber: &lt; 10<sup>−6</sup>; red: worse.
+        </p>
+
+        <h3 class="h3">Relative error over the real line</h3>
+        <svg id="accChart" viewBox="0 0 640 340" class="chart"></svg>
+        <div class="note" id="accNote"></div>
+
+        <h3 class="h3">Speed</h3>
+        <div class="flex flex-wrap items-end gap-3">
+          <button id="benchRun" class="btn">Run benchmark</button>
+          <p class="text-xs text-slate-500 pb-2">
+            200,000 calls per method, x uniform on [−8, 8]
+          </p>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="benchTable"></table>
+        </div>
+        <div class="note" id="benchNote"></div>
+
+        <h3 class="h3">Try a value</h3>
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="text-sm"
+            >x<br /><input
+              id="calcX"
+              type="number"
+              step="any"
+              value="-6.5"
+              class="field w-32 mt-1"
+          /></label>
+          <button id="calcRun" class="btn">Compute Φ(x)</button>
+          <a id="calcWolfram" class="lnk text-sm pb-2" target="_blank" rel="noopener"
+            >check on Wolfram Alpha</a
+          >
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="calcTable"></table>
+        </div>
+      </section>
+
+      <!-- ===================== Conclusions ===================== -->
+      <section id="conclusions" class="card">
+        <h2 class="h2">9. Conclusions</h2>
+        <h3 class="h3 mt-4">Riemann and Lebesgue</h3>
+        <p class="txt">
+          On all standard Riemann-integrable functions, both approaches
+          converge to the exact same value, as expected from the theory. The
+          main differences are how fast they converge and how much they cost to
+          compute:
+        </p>
+        <ul class="list-disc pl-5 text-sm text-slate-600 leading-relaxed mt-2 space-y-1">
+          <li>
+            <b>Accuracy and convergence.</b> Riemann sums depend on how smooth
+            f(x) is: Simpson's rule reaches order 4 on smooth curves like sin x.
+            Lebesgue integration depends instead on the smoothness of the
+            level-set measure t ↦ μ({f &gt; t}). Flat peaks or valleys in f slow
+            Lebesgue down to order 1.5 because of square-root singularities in
+            the measure (as in sin x). On the other hand, infinite slopes do not
+            hurt the measure, which is why Lebesgue keeps order 2 on √x while
+            Riemann drops to 1.5.
+          </li>
+          <li>
+            <b>Computational cost.</b> In practice, measuring preimages exactly
+            requires numerical root-finding (around 50 function calls per piece
+            using bisection). This makes exact Lebesgue integration roughly two
+            orders of magnitude more expensive per step than a simple Riemann
+            sum. The sampled histogram version runs at standard Riemann speed,
+            but adds quantization error from binning values.
+          </li>
+          <li>
+            <b>Pathological and difficult functions.</b> For unbounded functions
+            like 1/√x, Lebesgue integration works naturally with a simple height
+            truncation, while standard Riemann sums fail at x = 0. For functions
+            with discontinuities on a set of positive measure (Dirichlet, Fat
+            Cantor), Riemann sums never converge (U − L &gt; 0), whereas the
+            Lebesgue integral gives the correct area directly. On Thomae's
+            function, both reach 0, but Riemann sums oscillate with the
+            arithmetic of N.
+          </li>
+          <li>
+            <b>Implementation considerations.</b> Because computers use discrete
+            floating-point numbers, they cannot detect irrational numbers or
+            find arbitrary preimages on their own. Numerical Lebesgue
+            integration either requires knowing the shape of f in advance, or
+            using Monte Carlo methods (which estimate measures directly because
+            P(X ∈ A) = μ(A)).
+          </li>
+        </ul>
+
+        <h3 class="h3">The normal CDF</h3>
+        <p class="txt">
+          Liouville's theorem shows that Φ cannot be written with standard
+          elementary functions. While the error function erf provides a clean
+          mathematical definition, numerical methods are still needed to evaluate
+          it. Each method has trade-offs: Taylor and Marsaglia series converge
+          fast near 0, but fail in the tails because subtracting two nearly equal
+          numbers destroys precision. Continued fractions and asymptotic
+          expansions do the opposite: they work best in the far tails. Fixed
+          rational approximations (Abramowitz &amp; Stegun) are very fast, but
+          stop around 10<sup>−7</sup> accuracy. Combining a series near 0 with a
+          continued fraction in the tails (my hybrid approach) gives double
+          precision everywhere (~10<sup>−16</sup>) with sub-microsecond runtimes.
+        </p>
+      </section>
+    </main>
+    <script src="js/ui.js"></script>
+    <script src="js/hw6.js"></script>
+  </body>
+</html>
