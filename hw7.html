@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homework 7 · Statistical independence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+      @layer components {
+        .card {
+          @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8;
+        }
+        .h2 {
+          @apply text-2xl font-semibold tracking-tight text-slate-900;
+        }
+        .h3 {
+          @apply text-lg font-semibold text-slate-900 mt-8 mb-2;
+        }
+        .lead {
+          @apply text-slate-600 mt-2 leading-relaxed;
+        }
+        .txt {
+          @apply text-sm text-slate-600 leading-relaxed mt-2;
+        }
+        .btn {
+          @apply inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition disabled:opacity-50;
+        }
+        .field {
+          @apply rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100;
+        }
+        .tbl {
+          @apply w-full text-sm text-left;
+        }
+        .tbl th {
+          @apply px-3 py-2 font-medium text-slate-500 border-b border-slate-200 bg-slate-50;
+        }
+        .tbl td {
+          @apply px-3 py-2 border-b border-slate-100 align-top;
+        }
+        .tile {
+          @apply rounded-xl bg-slate-50 border border-slate-200 p-4;
+        }
+        .note {
+          @apply rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-sm p-4 mt-4 leading-relaxed;
+        }
+        .warn {
+          @apply rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm p-4 mt-4 leading-relaxed;
+        }
+        .check {
+          @apply text-sm text-slate-600 mt-3 leading-relaxed;
+        }
+        .mono {
+          @apply font-mono text-[13px];
+        }
+        .chart {
+          @apply w-full max-w-[640px] mt-4 rounded-xl border border-slate-200 bg-white;
+        }
+        .lnk {
+          @apply text-indigo-600 underline;
+        }
+        .ul {
+          @apply list-disc pl-5 text-sm text-slate-600 leading-relaxed mt-2 space-y-1;
+        }
+      }
+      .font-mono,
+      .mono {
+        font-variant-ligatures: none;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased">
+    <nav
+      class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between text-sm"
+      >
+        <a href="index.html" class="font-semibold text-slate-900"
+          >Statistics · Homeworks</a
+        >
+        <div class="hidden md:flex gap-4 text-slate-600">
+          <a href="#dataset" class="hover:text-indigo-600">Dataset</a>
+          <a href="#table" class="hover:text-indigo-600">Table</a>
+          <a href="#frequencies" class="hover:text-indigo-600">Frequencies</a>
+          <a href="#expected" class="hover:text-indigo-600">Expected</a>
+          <a href="#chisquare" class="hover:text-indigo-600">χ²</a>
+          <a href="#pvalue" class="hover:text-indigo-600">p-value</a>
+          <a href="#theory" class="hover:text-indigo-600">Theory</a>
+          <a href="#interpretation" class="hover:text-indigo-600">Interpretation</a>
+          <a href="#causality" class="hover:text-indigo-600">Causality</a>
+          <a href="#conclusions" class="hover:text-indigo-600">Conclusions</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+
+      <!-- ===================== 1 · dataset ===================== -->
+      <section id="dataset" class="card">
+        <h2 class="h2">1. The bivariate dataset (X, F)</h2>
+        <p class="lead">
+          "Bivariate" means that each statistical unit k = 1 … n carries
+          two observations, the pair (x<sub>k</sub>, f<sub>k</sub>). Both
+          variables here are <b>categorical</b>: X has r categories
+          a<sub>1</sub> … a<sub>r</sub> (they become the rows of the table), F
+          has c categories b<sub>1</sub> … b<sub>c</sub> (the columns).
+        </p>
+        <p class="txt">
+          The assignment says "any" dataset, so the page offers three: a synthetic one and two real ones. The synthetic one continues the hacker story of HW4–HW5 and acts as a control: since we wrote the generator, we know the right answer and can check that the test finds it. Two more synthetic models, one independent and one weakly dependent, are not in the menu: §8 uses them to measure the type I error and the power of the test.
+        </p>
+        <ul class="ul">
+          <li>
+            <b>Synthetic, dependent</b>: X = hacker level, F = outcome, and seniors succeed much more often than juniors.
+          </li>
+          <li>
+            <b>Real, Titanic</b>: 2201 people on board, class × survival.
+          </li>
+          <li>
+            <b>Real, NSL-KDD</b>: 25192 network connections, protocol × traffic class (normal, DoS, probe, R2L/U2R).
+          </li>
+        </ul>
+        <div class="flex flex-wrap items-end gap-3 mt-5">
+          <label class="text-sm"
+            >Dataset<br /><select id="dsPick" class="field mt-1"></select
+          ></label>
+          <label class="text-sm"
+            >n (units)<br /><input
+              id="dsN"
+              type="number"
+              min="20"
+              max="200000"
+              value="500"
+              class="field w-28 mt-1"
+          /></label>
+          <label class="text-sm"
+            >seed<br /><input
+              id="dsSeed"
+              type="number"
+              min="1"
+              value="7"
+              class="field w-20 mt-1"
+          /></label>
+          <button id="dsRun" class="btn">Generate</button>
+        </div>
+        <div class="note" id="dsAbout"></div>
+        <p class="check" id="dsCount"></p>
+        <div class="overflow-x-auto mt-2 max-w-md">
+          <table class="tbl mono" id="dsPreview"></table>
+        </div>
+        <p class="txt">
+          The <b>seed</b> fixes the random generator (mulberry32), so the same
+          seed always gives the same data. Change it to see a new random
+          sample from the same model.
+        </p>
+        <p class="txt">
+          Numeric variables need binning. A contingency table needs categories. A
+          numeric variable, such as the 0–10 score of HW5, has to be cut into
+          classes first, for example [0, 3), [3, 7), [7, 10]. The cut points
+          change χ², so they must be stated and justified. The datasets here
+          are categorical from the start, so no binning is needed.
+        </p>
+      </section>
+
+      <!-- ===================== 2 · contingency table ===================== -->
+      <section id="table" class="card">
+        <h2 class="h2">2. Contingency table</h2>
+        <p class="lead">
+          The contingency table counts the pairs: n<sub>ij</sub> = number of
+          units with X = a<sub>i</sub> <i>and</i> F = b<sub>j</sub>. Adding a
+          row gives the <b>row total</b> n<sub>i·</sub> = Σ<sub>j</sub>
+          n<sub>ij</sub> (how many units have X = a<sub>i</sub>, whatever F);
+          adding a column gives the <b>column total</b> n<sub>·j</sub>. The dot
+          stands for "summed over that index". All the totals add up to n.
+        </p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="ctTable"></table>
+        </div>
+        <p class="check" id="ctCheck"></p>
+        <h3 class="h3">How the code builds it</h3>
+        <p class="txt">
+          It is a "group by and count". First the categories are fixed (one
+          index per category, kept in a <span class="mono">Map</span>), then a
+          single loop over the n pairs adds one to the right cell. The cost is
+          O(n + r·c).
+        </p>
+        <pre class="tile mono mt-3 overflow-x-auto text-[12px] leading-5">
+function crossTab(xs, fs, rows, cols) {
+  rows = rows || [...new Set(xs)];        // categories of X, in order of appearance
+  cols = cols || [...new Set(fs)];        // categories of F
+  const ri = new Map(rows.map((v, i) => [v, i])),
+        ci = new Map(cols.map((v, j) => [v, j]));
+  const table = rows.map(() => cols.map(() => 0));
+  for (let k = 0; k &lt; xs.length; k++) table[ri.get(xs[k])][ci.get(fs[k])]++;
+  return withTotals(rows, cols, table);   // adds rowTot, colTot, n
+}</pre
+        >
+        <p class="txt">
+          The Titanic data come as a table of counts. The page first expands
+          the table back into 2201 individual records (one pair per person) and
+          then sends those through the same <span class="mono">crossTab</span>:
+          getting the original table back is a test of the code.
+        </p>
+      </section>
+
+      <!-- ===================== 3 · marginal and conditional ===================== -->
+      <section id="frequencies" class="card">
+        <h2 class="h2">3. Marginal and conditional frequencies</h2>
+        <p class="lead">
+          Counts are hard to compare when the rows have different sizes (there
+          are many more juniors than seniors). Dividing by the right total
+          turns them into proportions. Which total you divide by decides what
+          the proportion means.
+        </p>
+        <div class="grid md:grid-cols-3 gap-4 mt-4">
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">Joint</p>
+            <p class="mono mt-2 leading-7">f<sub>ij</sub> = n<sub>ij</sub> / n</p>
+            <p class="text-xs text-slate-500 mt-1">
+              share of <i>all</i> units in cell (i, j). Sums to 1 over the
+              whole table.
+            </p>
+          </div>
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">Marginal</p>
+            <p class="mono mt-2 leading-7">
+              f<sub>i·</sub> = n<sub>i·</sub>/n, &nbsp; f<sub>·j</sub> =
+              n<sub>·j</sub>/n
+            </p>
+            <p class="text-xs text-slate-500 mt-1">
+              distribution of one variable alone, ignoring the other. Written
+              in the margins of the table, hence the name.
+            </p>
+          </div>
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">Conditional</p>
+            <p class="mono mt-2 leading-7">
+              f(b<sub>j</sub> | a<sub>i</sub>) = n<sub>ij</sub>/n<sub>i·</sub>
+            </p>
+            <p class="text-xs text-slate-500 mt-1">
+              distribution of F <i>among the units with X = a<sub>i</sub></i>
+              only ("given X = a<sub>i</sub>"). Each row sums to 1: the
+              <b>row profile</b>. Swapping roles gives the column profile
+              f(a<sub>i</sub> | b<sub>j</sub>) = n<sub>ij</sub>/n<sub>·j</sub>.
+            </p>
+          </div>
+        </div>
+        <p class="txt">
+          The three are linked by the empirical version of P(A ∩ B) = P(B | A)
+          P(A): &nbsp;<span class="mono"
+            >f<sub>ij</sub> = f(b<sub>j</sub> | a<sub>i</sub>)·f<sub>i·</sub> =
+            f(a<sub>i</sub> | b<sub>j</sub>)·f<sub>·j</sub></span
+          >.
+        </p>
+        <p class="check" id="freqCheck"></p>
+
+        <h3 class="h3">Joint relative frequencies, with the marginals</h3>
+        <div class="overflow-x-auto"><table class="tbl mono" id="relTable"></table></div>
+        <h3 class="h3">Row profiles f(F | X)</h3>
+        <p class="txt">
+          Read one row at a time: "among the juniors, which share failed,
+          partially succeeded, succeeded?". The last row is the marginal of F:
+          the same question asked of everybody.
+        </p>
+        <div class="overflow-x-auto"><table class="tbl mono" id="rowProfTable"></table></div>
+        <h3 class="h3">Column profiles f(X | F)</h3>
+        <p class="txt">
+          Read one column at a time: "among the successful attacks, which
+          share came from juniors, mids, seniors?".
+        </p>
+        <div class="overflow-x-auto"><table class="tbl mono" id="colProfTable"></table></div>
+
+        <h3 class="h3">100% stacked bars</h3>
+        <p class="txt">
+          One bar per row profile, plus the marginal of F at the bottom. If X
+          and F were independent, every bar would break at the same points as
+          the marginal (the dashed lines). Bars that break elsewhere are the
+          visible sign of dependence.
+        </p>
+        <svg id="profChart" viewBox="0 0 640 300" class="chart"></svg>
+      </section>
+
+      <!-- ===================== 4 · expected ===================== -->
+      <section id="expected" class="card">
+        <h2 class="h2">4. Expected frequencies under independence</h2>
+        <p class="lead">
+          Suppose X and F are independent. Then the share of units in cell (i,
+          j) should be the share with X = a<sub>i</sub> times the share with F
+          = b<sub>j</sub>, exactly as P(A ∩ B) = P(A)·P(B) for independent
+          events. Multiplying by n gives the count we <b>expect</b> in that
+          cell:
+        </p>
+        <div class="tile mono mt-4 leading-8">
+          E<sub>ij</sub> = n · f<sub>i·</sub> · f<sub>·j</sub> = n ·
+          (n<sub>i·</sub>/n) · (n<sub>·j</sub>/n) = n<sub>i·</sub> ·
+          n<sub>·j</sub> / n &nbsp;&nbsp;&nbsp;
+          <span class="font-sans text-slate-500"
+            >("row total × column total ÷ grand total")</span
+          >
+        </div>
+        <p class="check" id="expWorked"></p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="expTable"></table>
+        </div>
+        <p class="check" id="expCheck"></p>
+        <ul class="ul">
+          <li>
+            E<sub>ij</sub> is usually not an integer: it is an average,
+            not a count that can really be observed.
+          </li>
+          <li>
+            The expected table has the same margins as the observed one
+            (Σ<sub>j</sub> E<sub>ij</sub> = n<sub>i·</sub>·Σ<sub>j</sub>
+            n<sub>·j</sub>/n = n<sub>i·</sub>). It keeps how many juniors and
+            how many successes there are, and only redistributes them as if the
+            two variables had nothing to do with each other.
+          </li>
+          <li>
+            <b>Cochran's rule</b>: the χ² approximation used in §6 is trusted
+            when no E<sub>ij</sub> is below 1 and at most 20% of them are below
+            5. With small n (try n = 30) the rule fails; then merge categories
+            or use the permutation test, which does not need it.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== 5 · chi-square ===================== -->
+      <section id="chisquare" class="card">
+        <h2 class="h2">5. The χ² statistic</h2>
+        <p class="lead">
+          We now have two tables, the observed O<sub>ij</sub> = n<sub>ij</sub>
+          and the expected E<sub>ij</sub>. Pearson's χ² (1900) turns their
+          difference into a single number:
+        </p>
+        <div class="tile mono mt-4 leading-8">
+          χ² = Σ<sub>i</sub> Σ<sub>j</sub> (O<sub>ij</sub> − E<sub>ij</sub>)² /
+          E<sub>ij</sub>, &nbsp;&nbsp; df = (r − 1)(c − 1), &nbsp;&nbsp; V =
+          √(χ² / (n·(min(r, c) − 1)))
+        </div>
+        <ul class="ul">
+          <li>
+            <b>Square</b>: so that positive and negative deviations do not
+            cancel out (Σ (O − E) is always 0, because both tables have the
+            same total).
+          </li>
+          <li>
+            <b>Divide by E</b>: a deviation of 10 is huge in a cell where we
+            expect 5 and nothing in a cell where we expect 5000. For a count
+            with mean E the natural random spread is about √E (Poisson:
+            variance ≈ mean), so (O − E)/√E is a <b>standardized residual</b>,
+            and χ² is the sum of their squares.
+          </li>
+          <li>
+            χ² ≥ 0, and χ² = 0 only if O = E in every cell, i.e. if the
+            table is exactly independent.
+          </li>
+          <li>
+            <b>Degrees of freedom</b> df = (r − 1)(c − 1): once the margins are
+            fixed, you can choose the cells of the first r − 1 rows and c − 1
+            columns freely, and the last row and column are forced by the
+            totals. A 2×2 table has df = 1; a 3×3 has df = 4.
+          </li>
+        </ul>
+        <h3 class="h3">Cell by cell</h3>
+        <div class="overflow-x-auto">
+          <table class="tbl mono" id="chiTable"></table>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4" id="chiTiles"></div>
+        <h3 class="h3">Where the dependence is: residual heatmap</h3>
+        <p class="txt">
+          χ² says <i>whether</i> the table deviates from independence, the
+          residuals r<sub>ij</sub> say <i>where</i> and <i>in which
+          direction</i>. On the dependent dataset: juniors fail more than
+          expected and seniors succeed more than expected.
+        </p>
+        <svg id="residChart" viewBox="0 0 640 300" class="chart"></svg>
+        <h3 class="h3">Cramér's V: the strength of the association</h3>
+        <p class="txt">
+          χ² grows with n. If every count is doubled the proportions do not
+          change, but χ² doubles. With a huge n even a negligible dependence
+          gives a huge χ². To measure <b>how strong</b> the association is, χ²
+          is divided by its largest possible value, n·(min(r, c) − 1), and the
+          square root is taken: this is <b>Cramér's V</b>, between 0
+          (independent) and 1 (one variable determines the other). For a 2×2
+          table it equals the φ coefficient. Rough guide (Cohen): for a 2×2
+          table 0.1 small, 0.3 medium, 0.5 large; for bigger tables divide
+          these thresholds by √(min(r, c) − 1), so for a 3×3 table they become
+          0.07, 0.21, 0.35. The Titanic table, multiplied by k:
+        </p>
+        <div class="overflow-x-auto mt-2 max-w-2xl">
+          <table class="tbl mono" id="scaleTable"></table>
+        </div>
+      </section>
+
+      <!-- ===================== 6 · p-value ===================== -->
+      <section id="pvalue" class="card">
+        <h2 class="h2">6. The p-value</h2>
+        <p class="lead">
+          Even when X and F are truly independent, a random sample never gives
+          χ² = 0 exactly: the counts are integers and fluctuate by chance. The
+          question is whether the observed χ² is larger than chance alone would usually give. We set up a test:
+        </p>
+        <ul class="ul">
+          <li>
+            <b>H<sub>0</sub></b> (null hypothesis): X and F are independent in
+            the population, p<sub>ij</sub> = p<sub>i·</sub>·p<sub>·j</sub>.
+          </li>
+          <li><b>H<sub>1</sub></b>: they are not.</li>
+          <li>
+            <b>p-value</b> = P(χ² ≥ χ²<sub>observed</sub> | H<sub>0</sub>): the
+            probability, <i>if</i> H<sub>0</sub> were true, of a deviation at
+            least as large as the one we saw. If p &lt; α (here α = 0.05) we
+            reject H<sub>0</sub>.
+          </li>
+        </ul>
+        <p class="txt">
+          To compute p we need the distribution of χ² under H<sub>0</sub>.
+          Pearson (with the right df found by Fisher in 1922) showed that for
+          large n it is approximately the <b>χ² distribution with df degrees of
+          freedom</b>, the distribution of a sum of df squared independent
+          standard normals. The p-value is its right tail. JavaScript has no
+          such function, so the page implements it three ways and also
+          estimates p without any formula.
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-4 mt-4">
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">df = 1: reuse Φ of HW6</p>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+              χ²₁ = Z² with Z ~ N(0, 1), so p = P(|Z| ≥ √x) = 2·Φ(−√x). Φ(−a)
+              is the small tail computed in HW6 (series + continued fraction),
+              never as 1 − Φ(a), which would lose all digits for large a.
+            </p>
+          </div>
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">even df = 2m: a finite sum</p>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed mono">
+              p = e<sup>−x/2</sup> Σ<sub>k=0</sub><sup>m−1</sup>
+              (x/2)<sup>k</sup>/k!
+            </p>
+            <p class="text-xs text-slate-500 mt-1">
+              For df = 2 simply p = e<sup>−x/2</sup>. For df = 4 (our 3×3
+              tables) two terms.
+            </p>
+          </div>
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">any df: incomplete gamma</p>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+              p = Q(df/2, x/2), the regularized upper incomplete gamma. Below
+              z = a + 1 a power series for P = 1 − Q; above it, a continued
+              fraction for Q directly (Numerical Recipes §6.2). ln Γ by
+              Lanczos. This is the one used everywhere on the page.
+            </p>
+          </div>
+        </div>
+
+        <h3 class="h3">The p-value of the current dataset</h3>
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="text-sm"
+            >permutations B<br /><input
+              id="permB"
+              type="number"
+              min="100"
+              max="20000"
+              value="2000"
+              class="field w-28 mt-1"
+          /></label>
+          <button id="permRun" class="btn">Run permutation test</button>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="pTable"></table>
+        </div>
+        <div class="note" id="pVerdict"></div>
+
+        <h3 class="h3">The permutation test: a p-value without formulas</h3>
+        <p class="txt">
+          Take the n pairs and <b>shuffle the values of F among the units</b>.
+          This destroys any link between X and F (H<sub>0</sub> is now true by
+          construction) but keeps both margins exactly. Compute χ² of the
+          shuffled table and repeat B times. The share of shuffled tables with
+          χ² at least as large as the observed one is the p-value:
+          p ≈ (#{χ²<sub>perm</sub> ≥ χ²<sub>obs</sub>} + 1)/(B + 1). It needs
+          no large-n approximation and no Cochran rule. The histogram below
+          should follow the χ²<sub>df</sub> density: that is the asymptotic
+          theory, checked by simulation.
+        </p>
+        <svg id="permChart" viewBox="0 0 640 300" class="chart"></svg>
+
+        <h3 class="h3">Is our p-value right? Comparison with a reference</h3>
+        <p class="txt">
+          The reference values were computed separately in Python (standard
+          library only), with the exact recurrence Q(½, z) = erfc(√z), Q(1, z)
+          = e<sup>−z</sup>, Q(a + 1, z) = Q(a, z) + z<sup>a</sup>e<sup>−z</sup>
+          / Γ(a + 1). Every row links to Wolfram Alpha for a check. The last two rows are the Berkeley aggregated
+          table (§9) and the Titanic table; R's
+          <span class="mono">chisq.test</span> prints "p &lt; 2.2e-16" for
+          both, our function gives the actual number.
+        </p>
+        <div class="overflow-x-auto mt-2">
+          <table class="tbl mono" id="refTable"></table>
+        </div>
+        <h3 class="h3">Critical values at α = 0.05</h3>
+        <p class="txt">
+          The critical value is the χ² that leaves exactly 5% on its right: if
+          χ²<sub>obs</sub> is above it, p &lt; 0.05. Computed by bisection on
+          our p-value function and compared with the printed tables:
+        </p>
+        <div class="overflow-x-auto mt-2">
+          <table class="tbl mono" id="critTable"></table>
+        </div>
+      </section>
+
+      <!-- ===================== 7 · theory ===================== -->
+      <section id="theory" class="card">
+        <h2 class="h2">7. Independence in statistics and in probability</h2>
+        <p class="lead">
+          The word "independence" is used in two places. In
+          <b>descriptive statistics</b> it is a property of the
+          <i>frequencies</i> of a dataset; in <b>probability</b> it is a
+          property of the <i>model</i> (the population) that produced it. The
+          χ² test uses the first to decide about the second.
+        </p>
+
+        <h3 class="h3">In statistics (on the data)</h3>
+        <p class="txt">
+          F is <b>statistically independent</b> of X if all the row profiles
+          are equal (and therefore equal to the marginal of F):
+          <span class="mono">f(b<sub>j</sub> | a<sub>i</sub>) = f<sub>·j</sub></span>
+          for every i, j. The following are equivalent:
+        </p>
+        <ol class="list-decimal pl-5 text-sm text-slate-600 leading-relaxed mt-2 space-y-1">
+          <li>all row profiles are equal;</li>
+          <li>
+            all column profiles are equal (independence is
+            <b>symmetric</b>: if F does not depend on X, X does not depend on
+            F);
+          </li>
+          <li class="mono">f<sub>ij</sub> = f<sub>i·</sub> · f<sub>·j</sub> for every cell;</li>
+          <li class="mono">n<sub>ij</sub> = n<sub>i·</sub> · n<sub>·j</sub> / n = E<sub>ij</sub> for every cell, i.e. χ² = 0.</li>
+        </ol>
+        <p class="txt">
+          <b>Proof of 1 ⇒ 3 ⇒ 2.</b> If f(b<sub>j</sub> | a<sub>i</sub>) =
+          f<sub>·j</sub>, then f<sub>ij</sub> = f(b<sub>j</sub> |
+          a<sub>i</sub>)·f<sub>i·</sub> = f<sub>·j</sub>·f<sub>i·</sub>, which
+          is 3. Dividing 3 by f<sub>·j</sub> gives f(a<sub>i</sub> |
+          b<sub>j</sub>) = f<sub>ij</sub>/f<sub>·j</sub> = f<sub>i·</sub>,
+          which is 2. Multiplying 3 by n gives 4.
+        </p>
+        <div class="warn">
+          On real data condition 4 practically never holds exactly: the counts
+          are integers and E<sub>ij</sub> usually is not. Exact statistical independence is an ideal. What we can ask is whether the data are <i>close enough</i> to it, and that is what χ² and its p-value measure.
+        </div>
+
+        <h3 class="h3">In probability (on the model)</h3>
+        <ul class="ul">
+          <li>
+            <b>Events</b> A and B are independent if P(A ∩ B) = P(A)·P(B).
+            When P(B) &gt; 0 this is the same as P(A | B) = P(A): learning that
+            B happened does not change the probability of A.
+          </li>
+          <li>
+            <b>Discrete random variables</b> X and Y are independent if P(X =
+            x, Y = y) = P(X = x)·P(Y = y) for every x, y: the joint law is the
+            product of the marginals. In general (also continuous):
+            F<sub>X,Y</sub>(x, y) = F<sub>X</sub>(x)·F<sub>Y</sub>(y), and with
+            densities f(x, y) = f<sub>X</sub>(x)·f<sub>Y</sub>(y).
+          </li>
+          <li>
+            Consequences: E[XY] = E[X]E[Y], so Cov(X, Y) = 0 and Var(X + Y) =
+            Var X + Var Y. HW4 used exactly this to get Var(S<sub>n</sub>) =
+            nσ² for the i.i.d. steps of the attacker.
+          </li>
+        </ul>
+
+        <h3 class="h3">The bridge: the Law of Large Numbers</h3>
+        <p class="txt">
+          A relative frequency is an estimate of a probability, and by the LLN
+          of HW4 f<sub>ij</sub> → p<sub>ij</sub>, f<sub>i·</sub> →
+          p<sub>i·</sub>, f<sub>·j</sub> → p<sub>·j</sub> as n → ∞. So if the
+          model is independent (p<sub>ij</sub> = p<sub>i·</sub>p<sub>·j</sub>),
+          the sample becomes closer and closer to statistically independent,
+          and χ²/n → 0. If the model is dependent, χ²/n tends to a positive
+          number (V² times min(r, c) − 1) and χ² itself grows like n.
+        </p>
+
+        <h3 class="h3">Trap 1: uncorrelated does not mean independent</h3>
+        <p class="txt">
+          Independence ⇒ Cov = 0, but not the other way round. Take X uniform
+          on {−1, 0, 1} and Y = X². Then Cov(X, Y) = E[X³] − E[X]E[X²] = 0 − 0
+          = 0, yet Y is completely determined by X. With 100 units per value
+          of X:
+        </p>
+        <div class="overflow-x-auto mt-2 max-w-md">
+          <table class="tbl mono" id="uncorrTable"></table>
+        </div>
+        <p class="check" id="uncorrNote"></p>
+
+        <h3 class="h3">Trap 2: pairwise does not mean mutually independent</h3>
+        <p class="txt">
+          With three or more events, independence of every pair is not enough.
+          Toss two fair coins: A = "first is heads", B = "second is heads", C
+          = "the two coins agree". Every pair is independent, but if A and B
+          both happen then C is certain:
+        </p>
+        <div class="overflow-x-auto mt-2 max-w-xl">
+          <table class="tbl mono" id="coinsTable"></table>
+        </div>
+      </section>
+
+      <!-- ===================== 8 · interpretation ===================== -->
+      <section id="interpretation" class="card">
+        <h2 class="h2">8. Interpretation</h2>
+        <p class="lead">
+          The verdict on each dataset (synthetic ones at n = 500, fixed seed).
+          For the synthetic datasets we know the truth, so we can tell whether
+          the test was right.
+        </p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl mono" id="interpTable"></table>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">If p &lt; α</p>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+              The data are hard to reconcile with independence: X and F are
+              <b>associated</b>. Look at V for <i>how much</i> and at the
+              residuals for <i>where</i>. You cannot conclude that X causes F (§9), and p says nothing about how large the effect is: that is V.
+            </p>
+          </div>
+          <div class="tile">
+            <p class="text-sm font-semibold text-slate-900">If p ≥ α</p>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+              The data are compatible with independence: <b>no evidence</b> of
+              association. You cannot claim that X and F are independent: we <i>fail to reject</i> H<sub>0</sub>, which is not a proof. With a small n the test may simply be unable to see a
+              real dependence (weak dataset at n = 500).
+            </p>
+          </div>
+        </div>
+        <p class="txt">
+          The p-value is not the probability that H<sub>0</sub> is true: it is a probability computed <i>assuming</i> H<sub>0</sub>.
+        </p>
+
+        <h3 class="h3">Experiment 1: on independent data, the test is wrong 5% of the time</h3>
+        <p class="txt">
+          α = 0.05 means: when H<sub>0</sub> is true we accept rejecting it by mistake 5% of the time (a <b>type I error</b>, a false alarm).
+          Generate many independent datasets, run the test on each, and count:
+        </p>
+        <button id="rejRun" class="btn mt-3">Running…</button>
+        <p class="check" id="rejNote"></p>
+        <svg id="rejChart" viewBox="0 0 640 290" class="chart"></svg>
+
+        <h3 class="h3">Experiment 2: on dependent data, p falls with n, V does not</h3>
+        <p class="txt">
+          200 datasets for each n, from the dependent and from the weakly
+          dependent model. "Rejections" is the share of the 200 tests with p
+          &lt; 0.05: the <b>power</b> of the test. The last row is V computed
+          on the model probabilities themselves (n = ∞).
+        </p>
+        <div class="overflow-x-auto mt-2">
+          <table class="tbl mono" id="pnTable"></table>
+        </div>
+        <svg id="pnChart" viewBox="0 0 640 290" class="chart"></svg>
+        <ul class="ul">
+          <li>
+            As n grows the median V settles on the model value (≈ 0.25 and ≈
+            0.05): V estimates a property of the population, the
+            <b>strength</b>. For small n it is biased upwards: even under
+            independence χ² is about df on average, so V² ≈ df / (n·(min(r, c)
+            − 1)) from noise alone (with n = 30, df = 4: V ≈ 0.26 for a model
+            with V = 0.05).
+          </li>
+          <li>
+            p falls towards 0 as n grows, for both models: p mixes strength
+            and sample size. The weak dependence is practically invisible at n
+            = 100 (power ≈ 10%, barely above α = 5%) and detected every time
+            from n = 10000. With enough data <b>every</b> non-zero dependence
+            becomes "significant", even one too small to matter in practice.
+            (A p shown as 0 is below 10<sup>−308</sup>, the smallest number a
+            double can hold.)
+          </li>
+          <li>
+            Missing a real dependence (weak model, small n) is a <b>type II
+            error</b>. The only cure is more data.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== 9 · causality ===================== -->
+      <section id="causality" class="card">
+        <h2 class="h2">9. Association is not causation</h2>
+        <p class="lead">
+          A significant χ² says only that the joint distribution of X and F
+          is not the product of the marginals. It is <b>symmetric</b> in X and
+          F (swap rows and columns and χ² is the same), so it does not even
+          have a direction: it cannot say who causes whom. An association can
+          come from:
+        </p>
+        <div class="overflow-x-auto mt-4">
+          <table class="tbl">
+            <tr><th>mechanism</th><th>cyber example</th></tr>
+            <tr><td><b>X causes F</b></td><td>applying a patch → fewer compromises</td></tr>
+            <tr><td><b>F causes X</b> (reverse causation)</td><td>companies that were breached then install an IDS: "companies with an IDS have more incidents"</td></tr>
+            <tr><td><b>A confounder Z</b> causes both</td><td>company size: large companies have more IDS <i>and</i> more incidents, with no effect of one on the other (built below)</td></tr>
+            <tr><td><b>Selection</b> (Berkson's bias)</td><td>studying only the systems that ended up in an incident report: two independent reasons for being included become associated in the sample</td></tr>
+            <tr><td><b>Chance</b></td><td>5% false alarms at α = 0.05; run 20 tests on unrelated variables and on average one is "significant" (multiple comparisons)</td></tr>
+          </table>
+        </div>
+
+        <h3 class="h3">A confounder built on purpose: IDS, incidents, company size</h3>
+        <p class="txt">
+          2000 companies, 1000 small and 1000 large. Large companies buy an
+          IDS far more often (90% vs 10%) and are attacked far more often (30%
+          vs 5%). <b>Inside each size class the IDS changes nothing</b>: the
+          incident rate is the same with or without it (each stratum is
+          exactly independent, χ² = 0). Pooling the two classes:
+        </p>
+        <div class="overflow-x-auto mt-2">
+          <table class="tbl mono" id="simpsonTable"></table>
+        </div>
+        <p class="txt">
+          The aggregated table shows a strong, highly significant association
+          (27.5% vs 7.5% incidents) that would read as "the IDS attracts
+          attacks". It exists only because size drives both variables.
+          Conditioning on the confounder (looking inside each stratum) makes
+          it vanish. This is <b>Simpson's paradox</b>: an association can
+          appear, disappear or reverse when a third variable is taken into
+          account.
+        </p>
+
+        <h3 class="h3">The real case: UC Berkeley admissions, 1973</h3>
+        <p class="txt">
+          Graduate admissions in the six largest departments, the best-known case of Simpson's paradox (Bickel, Hammel and O'Connell, <i>Science</i>
+          1975). Pooled, men are admitted much more often than women, and the
+          χ² test is overwhelming. Department by department the gap disappears
+          and in A it even reverses:
+        </p>
+        <div class="overflow-x-auto mt-2">
+          <table class="tbl mono" id="berkeleyTable"></table>
+        </div>
+        <p class="check" id="berkeleyNote"></p>
+
+        <h3 class="h3">Getting to causation</h3>
+        <ul class="ul">
+          <li>
+            <b>Randomized experiment</b>: assign X by coin flip (e.g. install
+            the IDS on randomly chosen machines). Randomization breaks the link
+            between X and every confounder, known or unknown; then an
+            association can only be caused by X (or by chance, which the test
+            controls).
+          </li>
+          <li>
+            <b>Observational data</b>: condition on the plausible confounders
+            (stratify, as above), check the time order (the cause comes
+            first), look for a mechanism and a dose–response relation (Bradford
+            Hill's criteria). This makes causation more or less plausible, never
+            proven.
+          </li>
+          <li>
+            For the synthetic hacker data we <i>can</i> say that the level
+            causes the outcome, but only because we wrote the generator: the
+            causal knowledge comes from the code, not from χ².
+          </li>
+          <li>
+            The other way round, absent confounding and selection, causation
+            does imply dependence, but even an observed independence does not
+            rule out a cause: two opposite effects can cancel out.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== 10 · conclusions ===================== -->
+      <section id="conclusions" class="card">
+        <h2 class="h2">10. Conclusions</h2>
+        <ul class="ul">
+          <li>
+            A contingency table is a group-by count
+            of the pairs (x<sub>k</sub>, f<sub>k</sub>). Dividing by n, by the
+            row totals or by the column totals gives joint, row-conditional and
+            column-conditional frequencies; the marginals are the distributions
+            of each variable alone.
+          </li>
+          <li>
+            Independence means equal profiles, equivalently f<sub>ij</sub>
+            = f<sub>i·</sub>f<sub>·j</sub>; the expected table E<sub>ij</sub> =
+            n<sub>i·</sub>n<sub>·j</sub>/n is what the data would look like if
+            it held exactly, with the same margins.
+          </li>
+          <li>
+            χ² adds up the squared standardized gaps between O and E.
+            Under independence it follows approximately χ²<sub>df</sub>, df =
+            (r − 1)(c − 1); its right tail is the p-value, computed here with
+            the incomplete gamma function (agreeing with independent references
+            to ~10<sup>−15</sup>) and confirmed by a permutation test.
+          </li>
+          <li>
+            The independent synthetic dataset is not rejected
+            (and over thousands of repetitions it is rejected ≈ 5% of the time,
+            as α promises). The dependent one is rejected with V ≈ 0.25
+            (medium for a 3×3 table). The weak one is missed at n = 500 and detected only
+            with thousands of units. The Titanic table gives χ² = 190.4 on 3
+            df, p ≈ 5·10<sup>−41</sup>, V = 0.29 (between small and medium): class and survival are clearly associated (62% of first class survived, 25% of third class). The NSL-KDD traffic gives χ² = 5207.4 on 6 df, p below 10<sup>−308</sup> (shown as 0), V = 0.32 (between medium and large for a table with min(r, c) − 1 = 2): 83% of the UDP connections are normal, against 16% of the ICMP ones.
+          </li>
+          <li>
+            p measures how surprising the data are under independence and depends on n. V measures how strong the association is and does not depend on n, so a report needs both.
+          </li>
+          <li>
+            χ² is symmetric and blind to mechanisms, so association does not give causation. The IDS example and Berkeley 1973 show an association
+            produced entirely by a confounder, which disappears inside the
+            strata. Causal claims need randomization or extra assumptions
+            outside the table.
+          </li>
+        </ul>
+      </section>
+    </main>
+    <footer class="max-w-5xl mx-auto px-4 pb-10 text-xs text-slate-400 w-full">
+      Giorgio Paoloni · Student ID 1943153 · 2026
+    </footer>
+    <script src="js/ui.js"></script>
+    <script src="js/hw7.js"></script>
+  </body>
+</html>
